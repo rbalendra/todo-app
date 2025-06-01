@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -42,8 +43,8 @@ public class Todo {
 
     
     /* ---------------- relationship between categories and tasks --------------- */
-    @OneToMany(mappedBy = "todo")
-    @JsonIgnoreProperties({ "todo", "category" })
+    @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("todo")
     private List<TodoCategory> todoCategories = new ArrayList<>();
  
     /* ------------------------------ constructors ------------------------------ */

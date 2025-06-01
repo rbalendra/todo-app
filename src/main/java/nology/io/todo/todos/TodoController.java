@@ -36,6 +36,14 @@ public class TodoController {
         return new ResponseEntity<>(allTodos, HttpStatus.OK);
     }
 
+    /* ----------------------------- GET TODO BY ID ----------------------------- */
+    @GetMapping("/{id}")
+    public ResponseEntity<Todo> getTodoById(@PathVariable Long id) throws NotFoundException {
+        Todo todo = this.todoService.findById(id);
+        return new ResponseEntity<>(todo, HttpStatus.OK);
+    }
+
+
     /* ------------------------------- POST todos ------------------------------- */
     @PostMapping
     public ResponseEntity<Todo> createTodo(@Valid @RequestBody CreateTodoDTO data) throws NotFoundException {

@@ -30,7 +30,16 @@ public class TodoService {
 public List<Todo> findAllActive() {
     return todoRepository.findByIsArchivedFalse(); // returns books that are not archived
 }
-    
+
+/* -------------------------- GET SINGLE TODO BY ID ------------------------- */
+
+public Todo findById(Long id) throws NotFoundException {
+    return todoRepository.findById(id)
+        .orElseThrow(() -> new NotFoundException("Todo not found " + id));
+}
+
+
+
 /* -------------------------- get todos by category ------------------------- */
 
     // fetch all non-archived todos belonging to specific category ID and validates if the category exists
