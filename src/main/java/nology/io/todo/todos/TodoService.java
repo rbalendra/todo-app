@@ -1,0 +1,111 @@
+package nology.io.todo.todos;
+
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.List;
+
+
+import org.springframework.stereotype.Service;
+
+import nology.io.todo.category.Category;
+import nology.io.todo.category.CategoryRepository;
+import nology.io.todo.common.exceptions.NotFoundException;
+import nology.io.todo.todocategory.TodoCategory;
+
+@Service
+public class TodoService {
+    
+    private final TodoRepository todoRepository;
+    private final CategoryRepository categoryRepository;
+    // Constructor based dependency injection is used to inject the TodoRepository and CategoryRepository
+
+    public TodoService(TodoRepository todoRepository, CategoryRepository categoryRepository) { // constructor based dependency injection
+        this.todoRepository = todoRepository;
+        this.categoryRepository = categoryRepository;
+    }
+
+/* -------------------------- get all active todos -------------------------- */
+
+public List<Todo> findAllActive() {
+    return todoRepository.findByIsArchivedFalse(); // returns books that are not archived
+}
+    
+/* -------------------------- get todos by category ------------------------- */
+
+    // fetch all non-archived todos belonging to specific category ID and validates if the category exists
+    public List<Todo> findByCategoryIdActive(Long categoryId) throws NotFoundException {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Category not found " + categoryId));
+
+        List<Todo> activeTodos = todoRepository.findByIsArchivedFalse();
+          return activeTodos.stream()
+                .filter(todo -> todo.getTodoCategories().stream()
+                        .anyMatch(tc -> tc.getCategory().getId().equals(categoryId)))
+                .collect(Collectors.toList());
+    }
+
+    /* -------------------------- // Create a new todo -------------------------- */
+    public Todo createTodo(CreateTodoDTO data) throws NotFoundException {
+        Todo todo = new Todo();
+        todo.setName(data.getName().trim());
+        todo.setDueDate(data.getDueDate());
+        todo.setCompleted(data.isCompleted());
+
+        todo = todoRepository.save(todo); // save the todo first to get the ID
+
+        Set<Long> categoryIds = data.getCategoryIds();
+        if (categoryIds != null && !categoryIds.isEmpty()) { // check for ids
+            for (Long catId : categoryIds) {
+                Category category = categoryRepository.findById(catId)
+                        .orElseThrow(() -> new NotFoundException("Category not found: " + catId));
+                TodoCategory todoCategory = new TodoCategory(todo, category);
+                todo.getTodoCategories().add(todoCategory);
+            }
+        }
+        return todoRepository.save(todo);
+    }
+    
+    /* ------------------------ update an exisiting todo ------------------------ */
+    public Todo updateTodo(Long id, UpdateTodoDTO data) throws NotFoundException {
+        Todo existing = todoRepository.findById(id).orElseThrow(() -> new NotFoundException("Todo not found " + id));
+        
+        if (data.getName() != null) {
+            existing.setName(data.getName().trim());
+        }
+
+        if (data.getDueDate() != null) {
+            existing.setDueDate(data.getDueDate());
+        }
+
+        if (data.getIsCompleted() != null) {
+            existing.setCompleted(data.getIsCompleted());
+        }
+
+        if (data.getCategoryIds() != null) {
+            existing.getTodoCategories().clear();
+            Set<Long> categoryIds = data.getCategoryIds();
+            for (Long catId : categoryIds) {
+                Category category = categoryRepository.findById(catId)
+                        .orElseThrow(() -> new NotFoundException("Category not found: " + catId));
+
+        TodoCategory todoCategory = new TodoCategory(existing, category);
+        existing.getTodoCategories().add(todoCategory);
+              
+            }
+
+        }
+        return todoRepository.save(existing);
+    }
+
+
+    /* ----------------------------- Archive a todo ----------------------------- */
+    public Todo archiveTodo(Long id) throws NotFoundException {
+        Todo todo = todoRepository.findById(id).orElseThrow(() -> new NotFoundException("Todo not found " + id));
+
+        todo.setArchived(true);
+
+        return todoRepository.save(todo);
+        }
+
+}
