@@ -43,3 +43,15 @@ export const getAllTodos = async (): Promise<Todo[]> => {
 		throw error
 	}
 }
+
+//create todo
+export const createTodo = async (todoData: CreateTodoDTO): Promise<Todo> => {
+	const response = await fetch(`${API_BASE_URL}/todos`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(todoData),
+	})
+
+	if (!response.ok) throw new Error(`Error: ${response.status}`)
+	return await response.json()
+}
