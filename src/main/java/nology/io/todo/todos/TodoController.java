@@ -63,11 +63,14 @@ public class TodoController {
     
     /* --------------------------------- update --------------------------------- */
     @PutMapping("/{id}")
-    public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @Valid @RequestBody UpdateTodoDTO data) throws NotFoundException {
+    public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @Valid @RequestBody UpdateTodoDTO data)
+            throws NotFoundException {
         Todo updatedTodo = this.todoService.updateTodo(id, data);
         // return HTTP 200 in the response body
         return new ResponseEntity<>(updatedTodo, HttpStatus.OK);
     }
+
+    
 
 
 }
