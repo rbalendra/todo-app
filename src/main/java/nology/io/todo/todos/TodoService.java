@@ -46,12 +46,8 @@ public Todo findById(Long id) throws NotFoundException {
     public List<Todo> findByCategoryIdActive(Long categoryId) throws NotFoundException {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Category not found " + categoryId));
-
-        List<Todo> activeTodos = todoRepository.findByIsArchivedFalse();
-          return activeTodos.stream()
-                .filter(todo -> todo.getTodoCategories().stream()
-                        .anyMatch(tc -> tc.getCategory().getId().equals(categoryId)))
-                .collect(Collectors.toList());
+        
+        return todoRepository.findByTodoCategoriesCategoryIdAndIsArchivedFalse(categoryId);
     }
 
     /* -------------------------- // Create a new todo -------------------------- */

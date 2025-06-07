@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -31,8 +32,13 @@ public class TodoController {
     /* -------------------------------- ENDPOINTS ------------------------------- */
 /* ------------------------------- GET TODOS ------------------------------- */
     @GetMapping
-    public ResponseEntity<List<Todo>> getAllTodos(Long categoryId) {
-        List<Todo> allTodos = this.todoService.findAllActive();
+    public ResponseEntity<List<Todo>> getAllTodos(@RequestParam(required = false) Long categoryId) throws NotFoundException {
+        List<Todo> allTodos;
+        if (categoryId != null) {
+            allTodos = this.todoService.findByCategoryIdActive(categoryId);
+        } else {
+            allTodos= this.todoService.findAllActive();
+        }
         return new ResponseEntity<>(allTodos, HttpStatus.OK);
     }
 
@@ -70,7 +76,6 @@ public class TodoController {
         return new ResponseEntity<>(updatedTodo, HttpStatus.OK);
     }
 
-    
-
+  
 
 }
