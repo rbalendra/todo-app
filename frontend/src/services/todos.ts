@@ -20,6 +20,15 @@ export interface CreateTodoDTO {
 	categoryIds?: number[]
 }
 
+export interface Category {
+	id: number
+	name: string
+}
+
+export interface CreateCategoryDTO {
+	name: string
+}
+
 // export interface UpdateTodoDTO {
 // 	name?: string
 // 	dueDate?: string
@@ -54,4 +63,18 @@ export const createTodo = async (todoData: CreateTodoDTO): Promise<Todo> => {
 
 	if (!response.ok) throw new Error(`Error: ${response.status}`)
 	return await response.json()
+}
+
+// Get all categories
+export const getAllCategories = async (): Promise<Category[]> => {
+	try {
+		const response = await fetch(`${API_BASE_URL}/categories`)
+		if (!response.ok) {
+			throw new Error(`Error fetching categories: ${response.status}`)
+		}
+		return await response.json()
+	} catch (error) {
+		console.error('Failed to fetch categories:', error)
+		throw error
+	}
 }
