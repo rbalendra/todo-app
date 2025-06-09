@@ -1,7 +1,9 @@
 export interface TodoCategory {
 	id: number
-	categoryName: string
-	categoryId: number
+	category: {
+		id: number
+		name: string
+	}
 }
 
 export interface Todo {
@@ -27,6 +29,14 @@ export interface Category {
 
 export interface CreateCategoryDTO {
 	name: string
+}
+
+export interface UpdateTodoDTO {
+	name?: string
+	dueDate?: string
+	isCompleted?: boolean
+	categoryIds?: number[]
+	isArchived?: boolean
 }
 
 // export interface UpdateTodoDTO {
@@ -65,6 +75,30 @@ export const createTodo = async (todoData: CreateTodoDTO): Promise<Todo> => {
 	return await response.json()
 }
 
+//delete todo
+export const deleteTodo = async (id: number): Promise<void> => {
+	const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
+		method: 'DELETE',
+	})
+	if (!response.ok) {
+		throw new Error(`Failed to delete todo ${id}: ${response.status}`)
+	}
+}
+
+// update Todo
+export const updateTodo = async (
+	id: number,
+	updateData: UpdateTodoDTO
+): Promise<Todo> => {
+	const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(updateData),
+	})
+	if (!response.ok) throw new Error(`Error updating todo: ${response.status}`)
+	return await response.json()
+}
+
 // Get all categories
 export const getAllCategories = async (): Promise<Category[]> => {
 	try {
@@ -76,5 +110,29 @@ export const getAllCategories = async (): Promise<Category[]> => {
 	} catch (error) {
 		console.error('Failed to fetch categories:', error)
 		throw error
+	}
+}
+// create categories
+export const createCategory = async (
+	categoryData: CreateCategoryDTO
+): Promise<Category> => {
+	const response = await fetch(`${API_BASE_URL}/categories`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(categoryData),
+	})
+
+	if (!response.ok) throw new Error(`Error: ${response.status}`)
+	return await response.json()
+}
+
+//delete categories
+export const deleteCategory = async (id: number): Promise<void> => {
+	const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+		method: 'DELETE',
+	})
+
+	if (!response.ok) {
+		throw new Error('Failed to delete category')
 	}
 }

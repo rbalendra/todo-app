@@ -6,6 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,8 +30,10 @@ public class Category {
     private String name;
 
 /* ------------------------------ relationship ------------------------------ */
-    @OneToMany(mappedBy = "category") // a single category can appear in many todos
+@OneToMany(mappedBy = "category",
+            cascade=CascadeType.ALL, orphanRemoval = true) // cascade + orphanRemoval so that when a Category is deleted all TodoCategory join rows are deleted first
     @JsonIgnoreProperties({ "todo", "category" }) // ignore the todo and category properties in the TodoCategory class
+    
     private List<TodoCategory> todoCategories = new ArrayList<>();
 
 /* ------------------------------ constructors ------------------------------ */

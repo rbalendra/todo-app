@@ -1,36 +1,45 @@
 import { useEffect, useState } from 'react'
+
 import {
 	createTodo,
 	getAllCategories,
+	createCategory,
+	deleteCategory,
+	updateTodo,
 	type Category,
-	type CreateTodoDTO,
+	type Todo,
 } from '../../services/todos'
 import Button from '../Button/Button'
 
 interface TodoFormProps {
-	onSuccess: () => void // Called after successful todo creation
-	onClose: () => void // Called to close the form
+	onSuccess: () => void //  Refreshes todo list after creation
+	onClose: () => void // Closes the modal/form
+	initialData?: Todo
 }
-
-export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
+export default function TodoForm({
+	onSuccess,
+	onClose,
+	initialData,
+}: TodoFormProps) {
 	// Main form state
 	const [formData, setFormData] = useState({
-		name: '',
-		dueDate: '',
-		isCompleted: false,
-		categoryIds: [] as number[],
+		id: initialData?.id,
+		name: initialData?.name ?? '',
+		dueDate: initialData?.dueDate ?? '',
+		isCompleted: initialData?.isCompleted ?? false,
+		categoryIds: initialData?.todoCategories.map((tc) => tc.category.id) ?? [],
 	})
 
 	// Loading states
-	const [isSubmitting, setIsSubmitting] = useState(false)
-	const [categories, setCategories] = useState<Category[]>([])
-	const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+	const [isSubmitting, setIsSubmitting] = useState(false) // to show creating in button
+	const [categories, setCategories] = useState<Category[]>([]) // store all avail categories from db
+	const [isLoadingCategories, setIsLoadingCategories] = useState(true) // to show loading categories while api fetch
 
 	// New category state
-	const [newCategoryName, setNewCategoryName] = useState('')
-	const [isCreatingCategory, setIsCreatingCategory] = useState(false)
+	const [newCategoryName, setNewCategoryName] = useState('') // input for new category name
+	const [isCreatingCategory, setIsCreatingCategory] = useState(false) // shows creating catgory in button
 
-	// ===== DATA FETCHING ===== //
+	/* ------------------------- data fetching from API ------------------------- */
 	useEffect(() => {
 		const fetchCategories = async () => {
 			try {
@@ -46,7 +55,21 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 		fetchCategories()
 	}, [])
 
-	// ===== FORM HANDLERS ===== //
+	//update the form
+	useEffect(() => {
+		if (initialData) {
+			setFormData({
+				id: initialData.id,
+				name: initialData.name,
+				dueDate: initialData.dueDate,
+				isCompleted: initialData.isCompleted,
+				categoryIds: initialData.todoCategories.map((tc) => tc.category.id),
+			})
+		}
+	}, [initialData])
+
+	/* ---------------------------- Handler fucntions --------------------------- */
+	/* ------------------------- handles form submission ------------------------ */
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 		if (!formData.name.trim() || !formData.dueDate) return
@@ -54,12 +77,21 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 		setIsSubmitting(true)
 
 		try {
-			await createTodo({
-				name: formData.name.trim(),
-				dueDate: formData.dueDate,
-				isCompleted: formData.isCompleted,
-				categoryIds: formData.categoryIds,
-			})
+			if (formData.id) {
+				await updateTodo(formData.id, {
+					name: formData.name.trim(),
+					dueDate: formData.dueDate,
+					isCompleted: formData.isCompleted,
+					categoryIds: formData.categoryIds,
+				})
+			} else {
+				await createTodo({
+					name: formData.name.trim(),
+					dueDate: formData.dueDate,
+					isCompleted: formData.isCompleted,
+					categoryIds: formData.categoryIds,
+				})
+			}
 			onSuccess()
 			onClose()
 		} catch (error) {
@@ -69,6 +101,7 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 		}
 	}
 
+	/* ------------------- handler function for input changes ------------------- */
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value, type, checked } = e.target
 		setFormData((prev) => ({
@@ -77,7 +110,7 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 		}))
 	}
 
-	// ===== CATEGORY HANDLERS ===== //
+	/* ------------------------ Category handler function ----------------------- */
 	const handleCategoryToggle = (categoryId: number) => {
 		setFormData((prev) => ({
 			...prev,
@@ -87,6 +120,7 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 		}))
 	}
 
+	/* ---------------------- create new category function ---------------------- */
 	const handleCreateCategory = async () => {
 		if (!newCategoryName.trim()) return
 
@@ -107,7 +141,20 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 		}
 	}
 
-	// ===== RENDER SECTION ===== //
+	/* ----------------------- delete category function ------------------------- */
+	const handleDeleteCategory = async (categoryId: number) => {
+		try {
+			await deleteCategory(categoryId)
+			setCategories((prev) => prev.filter((cat) => cat.id !== categoryId))
+			setFormData((prev) => ({
+				...prev,
+				categoryIds: prev.categoryIds.filter((id) => id !== categoryId),
+			}))
+		} catch (error) {
+			console.error('Failed to delete category:', error)
+		}
+	}
+
 	return (
 		<form onSubmit={handleSubmit} className='space-y-4'>
 			{/* Task Name */}
@@ -121,7 +168,7 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 					value={formData.name}
 					onChange={handleChange}
 					required
-					className='input-field'
+					className='input-field text-gray-900 bg-slate-200 p-2.5 rounded-md w-full'
 					placeholder='Enter task name'
 				/>
 			</div>
@@ -137,7 +184,7 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 					value={formData.dueDate}
 					onChange={handleChange}
 					required
-					className='input-field'
+					className='input-field text-gray-900 bg-slate-200 p-2.5 rounded-md w-full'
 				/>
 			</div>
 
@@ -150,24 +197,32 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 				{isLoadingCategories ? (
 					<p className='text-sm text-gray-500'>Loading categories...</p>
 				) : (
-					<div className='space-y-2 max-h-32 overflow-y-auto'>
+					<div className='space-y-2 max-h-32 overflow-y-auto flex flex-col'>
 						{categories.map((category) => (
-							<label key={category.id} className='checkbox-label '>
+							<label
+								key={category.id}
+								className='checkbox-label flex flex-row items-center flex-end justify-between p-1 bg-slate-200 rounded-md'>
 								<input
 									type='checkbox'
 									checked={formData.categoryIds.includes(category.id)}
 									onChange={() => handleCategoryToggle(category.id)}
-									className='checkbox-input'
+									className='checkbox-input '
 								/>
-								<span className='p-2'>{category.name}</span>
+								<span className='p-1 text-gray-900'>{category.name}</span>
+								<button
+									type='button'
+									onClick={() => handleDeleteCategory(category.id)}
+									className='text-red-500 hover:text-red-700 text-xs ml-2 font-semibold'>
+									Delete
+								</button>
 							</label>
 						))}
 					</div>
 				)}
 
 				{/* Add New Category */}
-				<div className='mt-3 pt-3 border-t border-gray-200'>
-					<label className='block text-xs font-medium text-gray-600 mb-1'>
+				<div className='mt-3 pt-3 border-t border-blue-900'>
+					<label className='block text-sm font-medium text-gray-700 mb-2'>
 						Create New Category
 					</label>
 					<div className='flex gap-2'>
@@ -176,7 +231,7 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 							value={newCategoryName}
 							onChange={(e) => setNewCategoryName(e.target.value)}
 							placeholder='Category name'
-							className='flex-1 input-field-sm'
+							className='flex-1 input-field-sm p-2 rounded-md bg-slate-200 text-gray-900'
 						/>
 						<Button
 							type='button'
@@ -191,15 +246,15 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 			</div>
 
 			{/* Completed Checkbox */}
-			<div className='checkbox-label'>
+			<div className='checkbox-label p-1'>
 				<input
 					type='checkbox'
 					name='isCompleted'
 					checked={formData.isCompleted}
 					onChange={handleChange}
-					className='checkbox-input'
+					className='checkbox-input p-1'
 				/>
-				<span>Mark as completed</span>
+				<span className='p-1 text-gray-900'>Mark as completed</span>
 			</div>
 
 			{/* Form Buttons */}
@@ -209,7 +264,13 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 					variant='PRIMARY'
 					disabled={isSubmitting}
 					className='flex-1'>
-					{isSubmitting ? 'Creating...' : 'Create Task'}
+					{isSubmitting
+						? formData.id
+							? 'Saving…'
+							: 'Creating…'
+						: formData.id
+						? 'Save Changes'
+						: 'Create Task'}
 				</Button>
 				<Button
 					type='button'
@@ -222,12 +283,3 @@ export default function TodoForm({ onSuccess, onClose }: TodoFormProps) {
 		</form>
 	)
 }
-
-// CSS classes extracted for readability
-const inputField =
-	'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-const inputFieldSm =
-	'px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
-const checkboxInput =
-	'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-const checkboxLabel = 'flex items-center space-x-2 cursor-pointer'
