@@ -52,7 +52,7 @@ const API_BASE_URL = 'http://localhost:8080'
 //get all active todos
 export const getAllTodos = async (): Promise<Todo[]> => {
 	try {
-		const response = await fetch(`${API_BASE_URL}/todos`)
+		const response = await fetch(`${API_BASE_URL}/todos?completed=false`)
 		if (!response.ok) {
 			throw new Error(`Error fetching todos: ${response.status}`)
 		}

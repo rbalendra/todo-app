@@ -201,7 +201,7 @@ export default function TodoForm({
 						{categories.map((category) => (
 							<label
 								key={category.id}
-								className='checkbox-label flex flex-row items-center flex-end justify-between p-1 bg-slate-200 rounded-md'>
+								className='checkbox-label flex flex-row items-center px-3 py-1 justify-between bg-slate-200 rounded-md'>
 								<input
 									type='checkbox'
 									checked={formData.categoryIds.includes(category.id)}
@@ -212,7 +212,7 @@ export default function TodoForm({
 								<button
 									type='button'
 									onClick={() => handleDeleteCategory(category.id)}
-									className='text-red-500 hover:text-red-700 text-xs ml-2 font-semibold'>
+									className='text-red-500 hover:text-red-700 text-xs font-semibold'>
 									Delete
 								</button>
 							</label>

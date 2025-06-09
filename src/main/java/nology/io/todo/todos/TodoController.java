@@ -1,6 +1,7 @@
 package nology.io.todo.todos;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,12 +33,16 @@ public class TodoController {
     /* -------------------------------- ENDPOINTS ------------------------------- */
 /* ------------------------------- GET TODOS ------------------------------- */
     @GetMapping
-    public ResponseEntity<List<Todo>> getAllTodos(@RequestParam(required = false) Long categoryId) throws NotFoundException {
+    public ResponseEntity<List<Todo>> getAllTodos(@RequestParam(required = false) Long categoryId,  @RequestParam(required = false) Boolean completed) throws NotFoundException {
         List<Todo> allTodos;
         if (categoryId != null) {
             allTodos = this.todoService.findByCategoryIdActive(categoryId);
         } else {
-            allTodos= this.todoService.findAllActive();
+            allTodos = this.todoService.findAllActive();
+        }
+        
+        if (completed != null) {
+            allTodos = allTodos.stream().filter(todo -> todo.isCompleted() == completed).collect(Collectors.toList());
         }
         return new ResponseEntity<>(allTodos, HttpStatus.OK);
     }

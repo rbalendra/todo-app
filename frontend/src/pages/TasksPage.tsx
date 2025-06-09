@@ -26,11 +26,13 @@ const TasksPage = () => {
 
 	// Handle opening the modal
 	const handleAddTask = () => {
+		setEditingTask(undefined)
 		setIsModalOpen(true)
 	}
 
 	// Handle closing the modal
 	const handleCloseModal = () => {
+		setEditingTask(undefined)
 		setIsModalOpen(false)
 	}
 
