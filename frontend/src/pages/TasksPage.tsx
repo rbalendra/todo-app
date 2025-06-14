@@ -1,15 +1,32 @@
 import { useEffect, useState } from 'react'
-import { deleteTodo, getAllTodos, type Todo } from '../services/todos'
+import {
+	createTodo,
+	deleteTodo,
+	getAllTodos,
+	type Todo,
+} from '../services/todos'
 import Modal from '../components/Modal/Modal'
 import TodoForm from '../components/Form/TodoForm'
 import { HiOutlineClipboardList } from 'react-icons/hi'
 import { FiEdit, FiTrash2 } from 'react-icons/fi'
+import { ThreeDot } from 'react-loading-indicators'
+import { MdContentCopy } from 'react-icons/md'
+import { IoIosAddCircle } from 'react-icons/io'
 
 const TasksPage = () => {
 	// managing states for tasks and modal
 	const [tasks, setTasks] = useState<Todo[]>([])
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [editingTask, setEditingTask] = useState<Todo | undefined>(undefined)
+
+	// states for loading and errors
+	const [isLoading, setIsLoading] = useState(true)
+	const [error, setError] = useState<string>('')
+	const [isDeleting, setIsDeleting] = useState<number | null>(null)
+
+	const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
+		null
+	)
 
 	// fetch tasks when component mounts
 	useEffect(() => {
@@ -21,8 +38,11 @@ const TasksPage = () => {
 		try {
 			const response = await getAllTodos()
 			setTasks(response)
+			setError('')
 		} catch (error) {
-			console.warn(error)
+			setError('Failed to load tasks. Please refresh the page.' + error)
+		} finally {
+			setIsLoading(false)
 		}
 	}
 
@@ -54,36 +74,102 @@ const TasksPage = () => {
 	}
 	//handle delete task and update UI
 	const handleDeleteTask = async (id: number) => {
+		setIsDeleting(id)
 		try {
 			await deleteTodo(id) //archive in server
 			//remove from local state so UI shows no tasks
 			setTasks((prev) => prev.filter((task) => task.id !== id))
 		} catch (error) {
-			console.error('Failed to delete task', error)
+			setError('Failed to delete task. Please Try again' + error)
+		} finally {
+			setIsDeleting(null)
 		}
 	}
 
-	return (
-		<div className='min-h-screen py-8 rounded-4xl '>
-			<div className='max-w-2xl mx-auto'>
-				{' '}
-				{/* Header section with title and add button */}
-				<div className='bg-white rounded-2xl shadow-sm p-6 mb-6 border-2 border-slate-600'>
-					<div className='flex justify-between items-center'>
-						<div className='flex items-center gap-3'>
-							<HiOutlineClipboardList className='text-3xl text-slate-500' />
-							<h1 className='text-3xl font-bold text-gray-500'>TASK MANAGER</h1>
+	//handle duplicatation tasks
+	const handleDuplicateTask = async (taskToDuplicate: Todo) => {
+		try {
+			// Create the duplicate task data
+			const duplicateData = {
+				name: `${taskToDuplicate.name} (Copy)`,
+				dueDate: taskToDuplicate.dueDate,
+				isCompleted: false,
+				categoryIds: taskToDuplicate.todoCategories.map((tc) => tc.category.id),
+			}
+
+			// Call the API to create the duplicate task
+			await createTodo(duplicateData)
+
+			// Refresh the tasks list to show the new duplicate
+			fetchTasks()
+		} catch (error) {
+			setError('Failed to duplicate task. Please try again.' + error)
+		}
+	}
+	//toggle filter on click
+	const handleFilterByCategory = (categoryId: number) => {
+		setSelectedCategoryId((prev) => (prev === categoryId ? null : categoryId))
+	}
+
+	// Error display component if backend is not running
+	if (error) {
+		return (
+			<div className='min-h-screen py-8'>
+				<div className='max-w-2xl mx-auto'>
+					<div className='bg-red-50 border border-red-200 rounded-2xl p-6 text-center'>
+						<div className=' mb-4'>
+							<div className='text-4xl mb-4'>⚠️</div>
 						</div>
+
+						<h2 className='text-red-800 text-xl font-semibold mb-2'>
+							Something went wrong
+						</h2>
+						<h3 className='text-red-600 mb-4'>{error}</h3>
 						<button
-							onClick={handleAddTask}
-							className='bg-purple-500 hover:bg-purple-600 text-white rounded-full w-15 h-10 flex items-center justify-center transition-colors shadow-sm hover:shadow-sm font-bold'>
-							+
+							onClick={fetchTasks}
+							className='bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors'>
+							Try Again
 						</button>
 					</div>
 				</div>
+			</div>
+		)
+	}
+	return (
+		<div className='min-h-screen py-8 rounded-4xl '>
+			<div className='max-w-2xl mx-auto'>
+				{/* Header section with title and add task button */}
+				<div className='bg-gray-50 rounded-2xl shadow-sm p-6 mb-6 border-2 border-slate-600'>
+					<div className='flex justify-between items-center'>
+						<div className='flex items-center gap-3'>
+							<HiOutlineClipboardList className='text-3xl text-slate-900' />
+							<h1 className='text-3xl font-bold text-gray-800'>TASK MANAGER</h1>
+						</div>
+						<button onClick={handleAddTask}>
+							<IoIosAddCircle className='w-10 h-10 bg-purple-400 hover:bg-purple-900 rounded-full transition-colors shadow-sm hover:shadow-sm' />
+						</button>
+					</div>
+				</div>
+
+				{/* Clear filter button */}
+				{selectedCategoryId && (
+					<div className='mb-4 text-right'>
+						<button
+							onClick={() => setSelectedCategoryId(null)}
+							className='text-sm font-bold text-red-600 hover:underline bg-red-100 rounded-md p-1 border-1 '>
+							Clear filter
+						</button>
+					</div>
+				)}
 				{/* Tasks list container */}
-				<div className='bg-white rounded-2xl shadow-sm p-6 border-2 border-slate-600'>
-					{tasks.length === 0 ? (
+				<div className='bg-gray-50 rounded-2xl shadow-sm p-6 border-2 border-slate-600'>
+					{isLoading ? (
+						// Loading state
+						<div className='text-center py-12'>
+							<ThreeDot color={['#7c31cc', '#cc3133', '#81cc31', '#31ccc9']} />
+							<p className='text-gray-500 mt-4'>Loading your tasks...</p>
+						</div>
+					) : tasks.length === 0 ? (
 						// Empty state when no tasks
 						<div className='text-center py-12 text-gray-500'>
 							<div className='text-6xl mb-4'>📋</div>
@@ -95,54 +181,89 @@ const TasksPage = () => {
 					) : (
 						//List of tasks
 						<div className='space-y-3'>
-							{tasks.map((task) => (
-								<div
-									key={task.id}
-									className={`
-                                        flex items-center justify-between p-4 rounded-xl  border-1 border-slate-600
-                                        hover:bg-purple-50 transition-colors
-                                    `}>
-									{/* Left side - Task info */}
-									<div className='flex-1'>
-										<h3 className='font-medium text-gray-800 mb-1 text-xl'>
-											{task.name}
-										</h3>
-										<p className='text-sm text-gray-500'>Due: {task.dueDate}</p>
+							{tasks.map((task) => {
+								const isFilteredOut =
+									selectedCategoryId !== null &&
+									!task.todoCategories.some(
+										(tc) => tc.category.id === selectedCategoryId
+									)
 
-										{/* Categories display */}
-										{task.todoCategories && task.todoCategories.length > 0 && (
-											<div className='flex flex-wrap gap-1 mt-2'>
-												{task.todoCategories.map((todoCat) => (
-													<span
-														key={todoCat.id}
-														className='bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full border-1'>
-														{todoCat.category.name}
-													</span>
-												))}
-											</div>
-										)}
+								return (
+									<div
+										key={task.id}
+										className={`
+								flex items-center justify-between p-4 rounded-xl border-1 border-slate-600
+								hover:bg-purple-50 transition-colors
+								${isDeleting === task.id ? 'opacity-50 pointer-events-none' : ''}
+								${isFilteredOut ? 'opacity-30 filter blur-sm' : ''}
+							  `}>
+										{/* Left side - Task info */}
+										<div className='flex-1'>
+											<h3 className='font-medium text-gray-800 mb-1 text-xl'>
+												{task.name}
+											</h3>
+											<p className='text-sm text-gray-500'>
+												Due: {task.dueDate}
+											</p>
+
+											{/* Categories display */}
+											{task.todoCategories &&
+												task.todoCategories.length > 0 && (
+													<div className='flex flex-wrap gap-1 mt-2'>
+														{task.todoCategories.map((todoCat) => (
+															<span
+																key={todoCat.id}
+																onClick={() =>
+																	handleFilterByCategory(todoCat.category.id)
+																}
+																className='bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full border-1 cursor-pointer hover:bg-purple-200 transition-colors'
+																style={
+																	selectedCategoryId === todoCat.category.id
+																		? {
+																				backgroundColor: '#d8b4fe',
+																				fontWeight: 'bold',
+																				textTransform: 'uppercase',
+																		  }
+																		: {}
+																}>
+																{todoCat.category.name}
+															</span>
+														))}
+													</div>
+												)}
+										</div>
+
+										{/* Right side - Action buttons */}
+										<div className='flex items-center gap-2 ml-4'>
+											{/* Edit button */}
+											<button
+												onClick={() => handleEditTask(task.id)}
+												className='text-gray-400 hover:text-green-500 p-2 rounded-lg hover:bg-green-50 transition-colors border-1'
+												title='Edit task'>
+												<FiEdit className='w-4 h-4' />
+											</button>
+											{/* Duplicate button */}
+											<button
+												onClick={() => handleDuplicateTask(task)}
+												className='text-gray-400 hover:text-blue-500 p-2 rounded-lg hover:bg-blue-50 transition-colors border-1'
+												title='Duplicate task'>
+												<MdContentCopy className='w-4 h-4' />
+											</button>
+											{/* Delete button */}
+											<button
+												onClick={() => handleDeleteTask(task.id)}
+												className='text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors border-1'
+												title='Delete task'>
+												{isDeleting === task.id ? (
+													<ThreeDot color='#ef4444' size='small' />
+												) : (
+													<FiTrash2 className='w-4 h-4' />
+												)}
+											</button>
+										</div>
 									</div>
-
-									{/* Right side - Action buttons */}
-									<div className='flex items-center gap-2 ml-4'>
-										{/* Edit button */}
-										<button
-											onClick={() => handleEditTask(task.id)}
-											className='text-gray-400 hover:text-green-500 p-2 rounded-lg hover:bg-green-50 transition-colors border-1'
-											title='Edit task'>
-											<FiEdit className='w-4 h-4' />
-										</button>
-
-										{/* Delete button */}
-										<button
-											onClick={() => handleDeleteTask(task.id)}
-											className='text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors border-1'
-											title='Delete task'>
-											<FiTrash2 className='w-4 h-4' />
-										</button>
-									</div>
-								</div>
-							))}
+								)
+							})}
 						</div>
 					)}
 				</div>

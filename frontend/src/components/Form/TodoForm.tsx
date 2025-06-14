@@ -16,6 +16,7 @@ interface TodoFormProps {
 	onClose: () => void // Closes the modal/form
 	initialData?: Todo
 }
+
 export default function TodoForm({
 	onSuccess,
 	onClose,
