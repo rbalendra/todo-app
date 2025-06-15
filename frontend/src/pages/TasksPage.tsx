@@ -111,6 +111,19 @@ const TasksPage = () => {
 		setSelectedCategoryId((prev) => (prev === categoryId ? null : categoryId))
 	}
 
+	// Helper function to check if a date is today or in the past
+	const isOverdue = (dateString: string): boolean => {
+		// this function will return a boolean
+		const today = new Date() // (eg: June 16, 2025, 11:30 AM)
+		today.setHours(0, 0, 0, 0) // Reset time part for accurate date comparison
+
+		const dueDate = new Date(dateString) //dateString to obj
+		dueDate.setHours(0, 0, 0, 0)
+		// console.log(dueDate)
+		// console.log(today)
+		return dueDate <= today // today or day in the past
+	}
+
 	// Error display component if backend is not running
 	if (error) {
 		return (
@@ -202,9 +215,15 @@ const TasksPage = () => {
 											<h3 className='font-medium text-gray-800 mb-1 text-xl'>
 												{task.name}
 											</h3>
-											<p className='text-sm text-gray-500'>
-												Due: {task.dueDate}
-											</p>
+											{isOverdue(task.dueDate) ? (
+												<p className='text-sm text-red-500 font-bold'>
+													OVERDUE
+												</p>
+											) : (
+												<p className='text-sm text-gray-500'>
+													Due: {task.dueDate}
+												</p>
+											)}
 
 											{/* Categories display */}
 											{task.todoCategories &&
