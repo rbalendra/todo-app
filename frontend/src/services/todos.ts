@@ -47,9 +47,9 @@ export interface UpdateTodoDTO {
 // 	categoryIds?: number[]
 // }
 
-// const API_BASE_URL = 'http://localhost:8080'
-const API_BASE_URL =
-	'http://ec2-3-106-122-62.ap-southeast-2.compute.amazonaws.com:8080'
+const API_BASE_URL = 'http://localhost:8080'
+// const API_BASE_URL =
+// 	'http://ec2-3-106-122-62.ap-southeast-2.compute.amazonaws.com:8080'
 //get all active todos
 export const getAllTodos = async (): Promise<Todo[]> => {
 	try {

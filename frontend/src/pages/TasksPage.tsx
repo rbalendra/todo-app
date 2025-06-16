@@ -3,6 +3,7 @@ import {
 	createTodo,
 	deleteTodo,
 	getAllTodos,
+	updateTodo,
 	type Todo,
 } from '../services/todos'
 import Modal from '../components/Modal/Modal'
@@ -12,6 +13,7 @@ import { FiEdit, FiTrash2 } from 'react-icons/fi'
 import { ThreeDot } from 'react-loading-indicators'
 import { MdContentCopy } from 'react-icons/md'
 import { IoIosAddCircle } from 'react-icons/io'
+import { FaCheck } from 'react-icons/fa'
 
 const TasksPage = () => {
 	// managing states for tasks and modal
@@ -27,7 +29,12 @@ const TasksPage = () => {
 	const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
 		null
 	)
-
+	//state to track completed tasks
+	const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set())
+	// Add these computed values for task counts
+	const totalTasks = tasks.length
+	const completedCount = tasks.filter((task) => task.isCompleted).length
+	const activeCount = totalTasks - completedCount
 	// fetch tasks when component mounts
 	useEffect(() => {
 		fetchTasks()
@@ -111,6 +118,25 @@ const TasksPage = () => {
 		setSelectedCategoryId((prev) => (prev === categoryId ? null : categoryId))
 	}
 
+	//handle toggle function
+	const handleToggleComplete = async (task: Todo) => {
+		try {
+			// Update the backend
+			await updateTodo(task.id, {
+				name: task.name,
+				dueDate: task.dueDate,
+				isCompleted: !task.isCompleted,
+			})
+			setTasks((prev) =>
+				prev.map((t) =>
+					t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t
+				)
+			)
+		} catch (error) {
+			setError('Failed to update task. Please try again.' + error)
+		}
+	}
+
 	// Helper function to check if a date is today or in the past
 	const isOverdue = (dateString: string): boolean => {
 		// this function will return a boolean
@@ -157,6 +183,14 @@ const TasksPage = () => {
 						<div className='flex items-center gap-3'>
 							<HiOutlineClipboardList className='text-3xl text-slate-900' />
 							<h1 className='text-3xl font-bold text-gray-800'>TASK MANAGER</h1>
+							<div className='pl-10 flex gap-3 text-sm'>
+								<span className='bg-green-100 text-green-700 px-4 py-1 rounded-full border-1'>
+									Completed: {completedCount}
+								</span>
+								<span className='bg-orange-100 text-orange-700 px-4 py-1 rounded-full border-1'>
+									Active: {activeCount}
+								</span>
+							</div>
 						</div>
 						<button onClick={handleAddTask}>
 							<IoIosAddCircle className='w-10 h-10 bg-purple-400 hover:bg-purple-900 rounded-full transition-colors shadow-sm hover:shadow-sm' />
@@ -206,13 +240,20 @@ const TasksPage = () => {
 										key={task.id}
 										className={`
 								flex items-center justify-between p-4 rounded-xl border-1 border-slate-600
-								hover:bg-purple-50 transition-colors
+								hover:bg-purple-100 transition-colors
 								${isDeleting === task.id ? 'opacity-50 pointer-events-none' : ''}
 								${isFilteredOut ? 'opacity-30 filter blur-sm' : ''}
+								
 							  `}>
+										{' '}
 										{/* Left side - Task info */}
 										<div className='flex-1'>
-											<h3 className='font-medium text-gray-800 mb-1 text-xl'>
+											<h3
+												className={`font-medium text-gray-800 mb-1 text-2xl ${
+													task.isCompleted // Use backend data instead of completedTasks.has(task.id)
+														? 'line-through decoration-pink-500'
+														: ''
+												}`}>
 												{task.name}
 											</h3>
 											{isOverdue(task.dueDate) ? (
@@ -251,9 +292,23 @@ const TasksPage = () => {
 													</div>
 												)}
 										</div>
-
 										{/* Right side - Action buttons */}
 										<div className='flex items-center gap-2 ml-4'>
+											{/* Add check button before edit button */}
+											<button
+												onClick={() => handleToggleComplete(task)}
+												className={`p-2 rounded-full transition-colors ${
+													task.isCompleted // Use backend data instead of completedTasks.has(task.id)
+														? 'bg-purple-500 text-white hover:bg-purple-900'
+														: 'bg-gray-200 text-gray-500 hover:bg-green-500'
+												}`}
+												title={
+													task.isCompleted // Use backend data instead of completedTasks.has(task.id)
+														? 'Mark as incomplete'
+														: 'Mark as complete'
+												}>
+												<FaCheck className='w-6 h-6' />
+											</button>
 											{/* Edit button */}
 											<button
 												onClick={() => handleEditTask(task.id)}
