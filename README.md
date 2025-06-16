@@ -1,4 +1,4 @@
-# Title {Replace with the project title}
+# TODO-APP
 
 {add test badges here, all projects you build from here on out will have tests, therefore you should have github workflow badges at the top of your repositories: [Github Workflow Badges](https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/adding-a-workflow-status-badge)}
 
@@ -12,8 +12,8 @@
 ## Requirements / Purpose
 
 -   MVP
--   purpose of project
--   stack used and why
+-   Create an API to be integrated with todos-ui project, that allows you to store and retrieve tasks from a database.
+-   Stack: React/Typescript + Springboot + mySQL (why it was used)
 
 ---
 
