@@ -298,12 +298,12 @@ const TasksPage = () => {
 											<button
 												onClick={() => handleToggleComplete(task)}
 												className={`p-2 rounded-full transition-colors ${
-													task.isCompleted // Use backend data instead of completedTasks.has(task.id)
-														? 'bg-purple-500 text-white hover:bg-purple-900'
-														: 'bg-gray-200 text-gray-500 hover:bg-green-500'
+													task.isCompleted
+														? 'bg-green-500 text-white hover:bg-green-600'
+														: 'bg-gray-200 text-gray-400 hover:bg-green-500 hover:text-white transition-all ease-in-out duration-500'
 												}`}
 												title={
-													task.isCompleted // Use backend data instead of completedTasks.has(task.id)
+													task.isCompleted
 														? 'Mark as incomplete'
 														: 'Mark as complete'
 												}>
