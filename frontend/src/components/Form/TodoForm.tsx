@@ -134,7 +134,7 @@ export default function TodoForm({
 			return
 		}
 
-		try {
+		try { // create new catagory
 			const newCategory = await createCategory({ name: newCategoryName.trim() })
 			setCategories((prev) => [...prev, newCategory])
 

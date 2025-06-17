@@ -22,7 +22,7 @@ import nology.io.todo.todocategory.TodoCategory;
 public class Category {
     
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy= GenerationType.AUTO)
     private Long id;
 
     @NotBlank
