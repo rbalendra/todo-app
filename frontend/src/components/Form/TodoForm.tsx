@@ -27,7 +27,6 @@ export default function TodoForm({
 		id: initialData?.id,
 		name: initialData?.name ?? '',
 		dueDate: initialData?.dueDate ?? '',
-		isCompleted: initialData?.isCompleted ?? false,
 		categoryIds: initialData?.todoCategories.map((tc) => tc.category.id) ?? [],
 	})
 
@@ -38,7 +37,6 @@ export default function TodoForm({
 
 	// New category state
 	const [newCategoryName, setNewCategoryName] = useState('') // input for new category name
-	const [isCreatingCategory, setIsCreatingCategory] = useState(false) // shows creating catgory in button
 	const [categoryError, setCategoryError] = useState('') // error message for category creation
 	/* ------------------------- data fetching from API ------------------------- */
 	useEffect(() => {
@@ -63,7 +61,6 @@ export default function TodoForm({
 				id: initialData.id,
 				name: initialData.name,
 				dueDate: initialData.dueDate,
-				isCompleted: initialData.isCompleted,
 				categoryIds:
 					initialData.todoCategories.map((tc) => tc.category.id) ?? [],
 			})
@@ -83,14 +80,12 @@ export default function TodoForm({
 				await updateTodo(formData.id, {
 					name: formData.name.trim(),
 					dueDate: formData.dueDate,
-					isCompleted: formData.isCompleted,
 					categoryIds: formData.categoryIds,
 				})
 			} else {
 				await createTodo({
 					name: formData.name.trim(),
 					dueDate: formData.dueDate,
-					isCompleted: formData.isCompleted,
 					categoryIds: formData.categoryIds,
 				})
 			}
@@ -105,10 +100,10 @@ export default function TodoForm({
 
 	/* ------------------- handler function for input changes ------------------- */
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, value, type, checked } = e.target
+		const { name, value } = e.target
 		setFormData((prev) => ({
 			...prev,
-			[name]: type === 'checkbox' ? checked : value,
+			[name]: value,
 		}))
 	}
 
@@ -139,8 +134,6 @@ export default function TodoForm({
 			return
 		}
 
-		setIsCreatingCategory(true)
-
 		try {
 			const newCategory = await createCategory({ name: newCategoryName.trim() })
 			setCategories((prev) => [...prev, newCategory])
@@ -153,8 +146,6 @@ export default function TodoForm({
 			setNewCategoryName('')
 		} catch (error) {
 			setCategoryError('Failed to create category. Please try again.' + error)
-		} finally {
-			setIsCreatingCategory(false)
 		}
 	}
 
@@ -210,7 +201,7 @@ export default function TodoForm({
 				<label className='block text-sm font-medium text-gray-700 mb-3'>
 					Categories
 				</label>
-				<div className='min-h-[120px]'>
+				<div className='min-h-[120px] border-1 text-slate-300 rounded-xl p-2 shadow-sm'>
 					{isLoadingCategories ? (
 						<div className='flex items-center justify-center '>
 							<p className='text-sm text-gray-500'>Loading categories...</p>
@@ -230,12 +221,13 @@ export default function TodoForm({
 										/>
 										<span className='text-gray-700'>{category.name}</span>
 									</div>
-									<button
+									<Button
 										type='button'
 										onClick={() => handleDeleteCategory(category.id)}
-										className='text-red-400 hover:text-red-600 text-sm font-bold px-2 py-1 rounded-lg hover:bg-red-100 transition-colors duration-200'>
+										variant='DANGER'
+										className='  hover:text-red-200 text-sm font-bold px-2 py-1 rounded-3xl hover:bg-red-100 transition-colors duration-200'>
 										Delete
-									</button>
+									</Button>
 								</label>
 							))}
 						</div>
@@ -267,9 +259,10 @@ export default function TodoForm({
 						<Button
 							type='button'
 							onClick={handleCreateCategory}
-							disabled={!newCategoryName.trim() || isCreatingCategory}
-							className='px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'>
-							{isCreatingCategory ? 'Creating category...' : 'Add'}
+							variant='PRIMARY'
+							disabled={!newCategoryName.trim()}
+							className='px-4 py-2  text-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'>
+							ADD
 						</Button>
 					</div>
 					{/* Error message */}
@@ -278,19 +271,6 @@ export default function TodoForm({
 					)}
 				</div>
 			</div>
-
-			{/* Completed Checkbox */}
-			<label className='flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors duration-200'>
-				<input
-					type='checkbox'
-					name='isCompleted'
-					checked={formData.isCompleted}
-					disabled={!formData.id} // Disable if creating new task
-					onChange={handleChange}
-					className='w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 transition-colors duration-200'
-				/>
-				<span className='text-gray-700'>Mark as completed</span>
-			</label>
 
 			{/* Form Buttons */}
 			<div className='flex gap-3 pt-2'>

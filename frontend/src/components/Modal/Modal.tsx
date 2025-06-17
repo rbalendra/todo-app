@@ -39,7 +39,7 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
 			/>
 
 			{/* Modal container - centered and responsive */}
-			<div className='relative z-10 bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border-5 border-purple-500 no-scrollbar h-[800px] '>
+			<div className='relative z-10 bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border-5 border-purple-500 no-scrollbar h-[700px] '>
 				{/* Header with title and close button */}
 				<div className='flex justify-between items-center p-6 border-b border-gray-100'>
 					<h2 className='text-2xl font-semibold text-gray-800'>{title}</h2>

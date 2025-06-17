@@ -29,8 +29,7 @@ const TasksPage = () => {
 	const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
 		null
 	)
-	//state to track completed tasks
-	const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set())
+
 	// Add these computed values for task counts
 	const totalTasks = tasks.length
 	const completedCount = tasks.filter((task) => task.isCompleted).length
@@ -243,15 +242,16 @@ const TasksPage = () => {
 								hover:bg-purple-100 transition-colors
 								${isDeleting === task.id ? 'opacity-50 pointer-events-none' : ''}
 								${isFilteredOut ? 'opacity-30 filter blur-sm' : ''}
+								${task.isCompleted ? 'bg-green-50 border-green-300' : ''}
 								
 							  `}>
 										{' '}
 										{/* Left side - Task info */}
 										<div className='flex-1'>
 											<h3
-												className={`font-medium text-gray-800 mb-1 text-2xl ${
-													task.isCompleted // Use backend data instead of completedTasks.has(task.id)
-														? 'line-through decoration-pink-500'
+												className={`font-medium text-gray-600 mb-1 text-2xl ${
+													task.isCompleted // Use backend data
+														? 'line-through decoration-pink-500 '
 														: ''
 												}`}>
 												{task.name}

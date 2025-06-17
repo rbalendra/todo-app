@@ -36,3 +36,17 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+
+
+# Ignore backend files
+/src/
+/target/
+/mvnw
+/mvnw.cmd
+/.mvn/
+pom.xml
+*.jar
+*.war
+*.properties
+*.pem

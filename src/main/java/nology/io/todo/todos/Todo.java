@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
@@ -24,7 +23,7 @@ import nology.io.todo.todocategory.TodoCategory;
 public class Todo {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     /* ---------------------------------- tasks --------------------------------- */
@@ -77,7 +76,7 @@ public class Todo {
         return dueDate;
     }
 
-    public void setDueDate(LocalDate dueDate) {
+    public void setDueDate(LocalDate dueDate){
         this.dueDate = dueDate;
     }
 
@@ -89,8 +88,8 @@ public class Todo {
         return isArchived;
     }
 
-    public void setCompleted(boolean completed) {
-        this.isCompleted = completed;
+    public void setIsCompleted(boolean isCompleted) {
+        this.isCompleted = isCompleted;
     }
 
     public void setArchived(boolean archived) {
@@ -104,6 +103,7 @@ public class Todo {
     public void setTodoCategories(List<TodoCategory> todoCategories) {
         this.todoCategories = todoCategories;
     }
+
 
 
 

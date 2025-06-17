@@ -49,7 +49,7 @@ public class TodoController {
 
     /* ----------------------------- GET TODO BY ID ----------------------------- */
     @GetMapping("/{id}")
-    public ResponseEntity<Todo> getTodoById(@PathVariable Long id) throws NotFoundException {
+    public ResponseEntity<Todo> getTodoById(@PathVariable Long id) throws NotFoundException{
         Todo todo = this.todoService.findById(id);
         return new ResponseEntity<>(todo, HttpStatus.OK);
     }
@@ -66,10 +66,9 @@ public class TodoController {
     
     /* ----------------------------- Archive/delete ----------------------------- */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> archiveTodo(@PathVariable Long id) throws NotFoundException {
-        this.todoService.archiveTodo(id);
-        // return HTTP 204 in the response body
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    public ResponseEntity<Todo> archiveTodo(@PathVariable Long id) throws NotFoundException {
+        Todo archivedTodo = this.todoService.archiveTodo(id); 
+        return new ResponseEntity<>(archivedTodo, HttpStatus.OK);
     }
     
     /* --------------------------------- update --------------------------------- */

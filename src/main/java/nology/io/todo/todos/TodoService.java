@@ -1,8 +1,6 @@
 package nology.io.todo.todos;
 
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.List;
 
 
@@ -55,7 +53,7 @@ public Todo findById(Long id) throws NotFoundException {
         Todo todo = new Todo();
         todo.setName(data.getName().trim());
         todo.setDueDate(data.getDueDate());
-        todo.setCompleted(data.isCompleted());
+        todo.setIsCompleted(data.isCompleted());
 
         todo = todoRepository.save(todo); // save the todo first to get the ID
 
@@ -84,7 +82,7 @@ public Todo findById(Long id) throws NotFoundException {
         }
 
         if (data.getIsCompleted() != null) {
-            existing.setCompleted(data.getIsCompleted());
+            existing.setIsCompleted(data.getIsCompleted());
         }
 
         if (data.getCategoryIds() != null) {
@@ -108,7 +106,7 @@ public Todo findById(Long id) throws NotFoundException {
     public Todo archiveTodo(Long id) throws NotFoundException {
         Todo todo = todoRepository.findById(id).orElseThrow(() -> new NotFoundException("Todo not found " + id));
 
-        todo.setArchived(true);
+        todo.setArchived(true); // soft delete by setting archived to true
 
         return todoRepository.save(todo);
         }

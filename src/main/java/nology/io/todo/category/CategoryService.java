@@ -1,12 +1,10 @@
 package nology.io.todo.category;
 
-import java.lang.foreign.Linker.Option;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import jakarta.validation.Valid;
 
 @Service
 public class CategoryService {
