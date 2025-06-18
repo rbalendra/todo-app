@@ -3,13 +3,12 @@ import { useEffect, useState } from 'react'
 import {
 	createTodo,
 	getAllCategories,
-	createCategory,
-	deleteCategory,
 	updateTodo,
 	type Category,
 	type Todo,
 } from '../../services/todos'
 import Button from '../Button/Button'
+import CategoryManager from '../CategoryManager/CategoryManager'
 
 interface TodoFormProps {
 	onSuccess: () => void //  Refreshes todo list after creation
@@ -22,11 +21,12 @@ export default function TodoForm({
 	onClose,
 	initialData,
 }: TodoFormProps) {
-	// Main form state
+	// Main form state - stores all todo information
 	const [formData, setFormData] = useState({
-		id: initialData?.id,
-		name: initialData?.name ?? '',
+		id: initialData?.id, // If editing, store the todo ID
+		name: initialData?.name ?? '', // Todo name (empty string if creating new)
 		dueDate: initialData?.dueDate ?? '',
+		// Extract category IDs from existing todo, or empty array if creating new
 		categoryIds: initialData?.todoCategories.map((tc) => tc.category.id) ?? [],
 	})
 
@@ -35,9 +35,6 @@ export default function TodoForm({
 	const [categories, setCategories] = useState<Category[]>([]) // store all avail categories from db
 	const [isLoadingCategories, setIsLoadingCategories] = useState(true) // to show loading categories while api fetch
 
-	// New category state
-	const [newCategoryName, setNewCategoryName] = useState('') // input for new category name
-	const [categoryError, setCategoryError] = useState('') // error message for category creation
 	/* ------------------------- data fetching from API ------------------------- */
 	useEffect(() => {
 		const fetchCategories = async () => {
@@ -117,50 +114,9 @@ export default function TodoForm({
 		}))
 	}
 
-	/* ---------------------- create new category function ---------------------- */
-	const handleCreateCategory = async () => {
-		if (!newCategoryName.trim()) return
-
-		// Clear previous error
-		setCategoryError('')
-		//check if category already exists
-		const categoryExists = categories.some(
-			(category) =>
-				category.name.toLowerCase() === newCategoryName.trim().toLowerCase()
-		)
-
-		if (categoryExists) {
-			setCategoryError('Category already exists!')
-			return
-		}
-
-		try { // create new catagory
-			const newCategory = await createCategory({ name: newCategoryName.trim() })
-			setCategories((prev) => [...prev, newCategory])
-
-			// Auto-select the new category
-			setFormData((prev) => ({
-				...prev,
-				categoryIds: [...prev.categoryIds, newCategory.id],
-			}))
-			setNewCategoryName('')
-		} catch (error) {
-			setCategoryError('Failed to create category. Please try again.' + error)
-		}
-	}
-
-	/* ----------------------- delete category function ------------------------- */
-	const handleDeleteCategory = async (categoryId: number) => {
-		try {
-			await deleteCategory(categoryId)
-			setCategories((prev) => prev.filter((cat) => cat.id !== categoryId))
-			setFormData((prev) => ({
-				...prev,
-				categoryIds: prev.categoryIds.filter((id) => id !== categoryId),
-			}))
-		} catch (error) {
-			console.error('Failed to delete category:', error)
-		}
+	// Handle when CategoryManager updates the categories list (after creating/deleting)
+	const handleCategoriesUpdate = (updatedCategories: Category[]) => {
+		setCategories(updatedCategories)
 	}
 
 	return (
@@ -196,81 +152,13 @@ export default function TodoForm({
 				/>
 			</div>
 
-			{/* Categories Section */}
-			<div>
-				<label className='block text-sm font-medium text-gray-700 mb-3'>
-					Categories
-				</label>
-				<div className='min-h-[120px] border-1 text-slate-300 rounded-xl p-2 shadow-sm'>
-					{isLoadingCategories ? (
-						<div className='flex items-center justify-center '>
-							<p className='text-sm text-gray-500'>Loading categories...</p>
-						</div>
-					) : (
-						<div className='space-y-2 max-h-[190px] overflow-y-auto no-scrollbar'>
-							{categories.map((category) => (
-								<label
-									key={category.id}
-									className='flex items-center justify-between p-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200 cursor-pointer'>
-									<div className='flex items-center gap-3'>
-										<input
-											type='checkbox'
-											checked={formData.categoryIds.includes(category.id)}
-											onChange={() => handleCategoryToggle(category.id)}
-											className='w-4 h-4 accent-purple-500 bg-gray-100 border-gray-300 rounded'
-										/>
-										<span className='text-gray-700'>{category.name}</span>
-									</div>
-									<Button
-										type='button'
-										onClick={() => handleDeleteCategory(category.id)}
-										variant='DANGER'
-										className='  hover:text-red-200 text-sm font-bold px-2 py-1 rounded-3xl hover:bg-red-100 transition-colors duration-200'>
-										Delete
-									</Button>
-								</label>
-							))}
-						</div>
-					)}
-				</div>
-
-				{/* Add New Category */}
-				<div className='mt-3 pt-3 border-t border-purple-900'>
-					<label className='block text-sm font-medium text-gray-700 mb-2'>
-						Create New Category
-					</label>
-					<div className='flex gap-2'>
-						<input
-							type='text'
-							value={newCategoryName}
-							onChange={(e) => {
-								setNewCategoryName(e.target.value)
-								setCategoryError('') // Clear error when user types
-							}}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
-									e.preventDefault() // Prevent form submission
-									handleCreateCategory() // Create the category instead
-								}
-							}}
-							placeholder='New Category name'
-							className='w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500  outline-none transition-all duration-200 text-gray-900'
-						/>
-						<Button
-							type='button'
-							onClick={handleCreateCategory}
-							variant='PRIMARY'
-							disabled={!newCategoryName.trim()}
-							className='px-4 py-2  text-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'>
-							ADD
-						</Button>
-					</div>
-					{/* Error message */}
-					{categoryError && (
-						<p className='text-red-500 text-sm mt-1'>{categoryError}</p>
-					)}
-				</div>
-			</div>
+			<CategoryManager
+				categories={categories} // Pass current categories list
+				selectedCategoryIds={formData.categoryIds} // Pass which categories are selected for this todo
+				onCategoriesUpdate={handleCategoriesUpdate} // Pass function to update categories when new ones are created/deleted
+				onCategoryToggle={handleCategoryToggle} // Pass function to handle checkbox clicks
+				isLoading={isLoadingCategories} // Pass loading state
+			/>
 
 			{/* Form Buttons */}
 			<div className='flex gap-3 pt-2'>

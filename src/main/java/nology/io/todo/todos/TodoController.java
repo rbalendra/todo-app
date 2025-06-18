@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -72,11 +73,10 @@ public class TodoController {
     }
     
     /* --------------------------------- update --------------------------------- */
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @Valid @RequestBody UpdateTodoDTO data)
             throws NotFoundException {
         Todo updatedTodo = this.todoService.updateTodo(id, data);
-        // return HTTP 200 in the response body
         return new ResponseEntity<>(updatedTodo, HttpStatus.OK);
     }
 

@@ -92,7 +92,7 @@ export const updateTodo = async (
 	updateData: UpdateTodoDTO
 ): Promise<Todo> => {
 	const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
-		method: 'PUT',
+		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(updateData),
 	})
