@@ -9,6 +9,7 @@ import {
 } from '../../services/todos'
 import Button from '../Button/Button'
 import CategoryManager from '../CategoryManager/CategoryManager'
+import toast from 'react-hot-toast'
 
 interface TodoFormProps {
 	onSuccess: () => void //  Refreshes todo list after creation
@@ -79,17 +80,24 @@ export default function TodoForm({
 					dueDate: formData.dueDate,
 					categoryIds: formData.categoryIds,
 				})
+				toast.success('Task updated successfully! ✏️')
 			} else {
 				await createTodo({
 					name: formData.name.trim(),
 					dueDate: formData.dueDate,
 					categoryIds: formData.categoryIds,
 				})
+				toast.success('New task created successfully! ✨')
 			}
 			onSuccess()
 			onClose()
 		} catch (error) {
 			console.error('Failed to create todo:', error)
+			toast.error(
+				formData.id
+					? 'Failed to update task. Please try again.'
+					: 'Failed to create task. Please try again.'
+			)
 		} finally {
 			setIsSubmitting(false)
 		}

@@ -1,5 +1,6 @@
 package nology.io.todo.todos;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,18 +35,40 @@ public class TodoController {
     /* -------------------------------- ENDPOINTS ------------------------------- */
 /* ------------------------------- GET TODOS ------------------------------- */
     @GetMapping
-    public ResponseEntity<List<Todo>> getAllTodos(@RequestParam(required = false) Long categoryId,  @RequestParam(required = false) Boolean completed) throws NotFoundException {
+    public ResponseEntity<List<Todo>> getAllTodos(@RequestParam(required = false) Long categoryId,
+              @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false, defaultValue = "asc") String sortOrder,
+            @RequestParam(required = false) Boolean completed) throws NotFoundException {
         List<Todo> allTodos;
         if (categoryId != null) {
             allTodos = this.todoService.findByCategoryIdActive(categoryId);
         } else {
             allTodos = this.todoService.findAllActive();
         }
-        
-        if (completed != null) {
-            allTodos = allTodos.stream().filter(todo -> todo.isCompleted() == completed).collect(Collectors.toList());
+
+      
+
+        // Sort the results
+        if (sortBy != null) {
+            allTodos = sortTodos(allTodos, sortBy, sortOrder);
         }
         return new ResponseEntity<>(allTodos, HttpStatus.OK);
+    }
+    
+    // this method is create to sort the todos based on the provided criteria
+    private List<Todo> sortTodos(List<Todo> todos, String sortBy, String sortOrder) {
+        Comparator<Todo> comparator = switch (sortBy.toLowerCase()) {
+            case "date", "duedate" -> Comparator.comparing(Todo::getDueDate);
+            case "name" -> Comparator.comparing(Todo::getName, String.CASE_INSENSITIVE_ORDER);
+            case "created" -> Comparator.comparing(Todo::getId); 
+            default -> Comparator.comparing(Todo::getDueDate);
+        };
+        
+        if ("desc".equalsIgnoreCase(sortOrder)) {
+            comparator = comparator.reversed();
+        }
+        
+        return todos.stream().sorted(comparator).collect(Collectors.toList());
     }
 
     /* ----------------------------- GET TODO BY ID ----------------------------- */

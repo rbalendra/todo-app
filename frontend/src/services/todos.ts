@@ -51,9 +51,28 @@ const API_BASE_URL = 'http://localhost:8080'
 // const API_BASE_URL =
 // 	'http://ec2-3-106-122-62.ap-southeast-2.compute.amazonaws.com:8080'
 //get all active todos
-export const getAllTodos = async (): Promise<Todo[]> => {
+export const getAllTodos = async (params?: {
+	categoryId?: number
+	sortBy?: 'date' | 'name'
+	sortOrder?: 'asc' | 'desc'
+}): Promise<Todo[]> => {
 	try {
-		const response = await fetch(`${API_BASE_URL}/todos`)
+		const searchParams = new URLSearchParams()
+
+		if (params?.categoryId) {
+			searchParams.append('categoryId', params.categoryId.toString())
+		}
+
+		if (params?.sortBy) {
+			searchParams.append('sortBy', params.sortBy)
+		}
+		if (params?.sortOrder) {
+			searchParams.append('sortOrder', params.sortOrder)
+		}
+		const url = `${API_BASE_URL}/todos${
+			searchParams.toString() ? `?${searchParams.toString()}` : ''
+		}`
+		const response = await fetch(url)
 		if (!response.ok) {
 			throw new Error(`Error fetching todos: ${response.status}`)
 		}

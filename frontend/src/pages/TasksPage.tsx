@@ -11,9 +11,10 @@ import TodoForm from '../components/Form/TodoForm'
 import { HiOutlineClipboardList } from 'react-icons/hi'
 import { FiEdit, FiTrash2 } from 'react-icons/fi'
 import { ThreeDot } from 'react-loading-indicators'
-import { MdContentCopy } from 'react-icons/md'
+import { MdContentCopy, MdDateRange } from 'react-icons/md'
 import { IoIosAddCircle } from 'react-icons/io'
-import { FaCheck } from 'react-icons/fa'
+import { FaCheck, FaSort } from 'react-icons/fa'
+import toast from 'react-hot-toast'
 
 const TasksPage = () => {
 	// managing states for tasks and modal
@@ -30,6 +31,13 @@ const TasksPage = () => {
 		null
 	)
 
+	// states for sorting
+	const [sortBy, setSortBy] = useState<'date' | 'name'>('date')
+	const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+	// const [showCompleted, setShowCompleted] = useState<boolean | undefined>(
+	// 	undefined
+	// )
+
 	// Add these computed values for task counts
 	const totalTasks = tasks.length
 	const completedCount = tasks.filter((task) => task.isCompleted).length
@@ -37,12 +45,16 @@ const TasksPage = () => {
 	// fetch tasks when component mounts
 	useEffect(() => {
 		fetchTasks()
-	}, [])
+	}, [selectedCategoryId, sortBy, sortOrder])
 
 	// Function to fetch all tasks from API
 	const fetchTasks = async () => {
 		try {
-			const response = await getAllTodos()
+			const response = await getAllTodos({
+				categoryId: selectedCategoryId || undefined,
+				sortBy,
+				sortOrder,
+			})
 			setTasks(response)
 			setError('')
 		} catch (error) {
@@ -85,8 +97,10 @@ const TasksPage = () => {
 			await deleteTodo(id) //archive in server
 			//remove from local state so UI shows no tasks
 			setTasks((prev) => prev.filter((task) => task.id !== id))
+			toast.success('Task deleted successfully! 🗑️')
 		} catch (error) {
 			setError('Failed to delete task. Please Try again' + error)
+			toast.error('Failed to delete task. Please try again.')
 		} finally {
 			setIsDeleting(null)
 		}
@@ -108,8 +122,10 @@ const TasksPage = () => {
 
 			// Refresh the tasks list to show the new duplicate
 			fetchTasks()
+			toast.success('Task duplicated successfully! 📋')
 		} catch (error) {
 			setError('Failed to duplicate task. Please try again.' + error)
+			toast.error('Failed to duplicate task. Please try again.')
 		}
 	}
 	//toggle filter on click
@@ -131,8 +147,16 @@ const TasksPage = () => {
 					t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t
 				)
 			)
+			if (!task.isCompleted) {
+				toast.success('Task completed! Well done! 🎉')
+			} else {
+				toast('Task marked as incomplete', {
+					icon: '↩️',
+				})
+			}
 		} catch (error) {
 			setError('Failed to update task. Please try again.' + error)
+			toast.error('Failed to update task. Please try again.')
 		}
 	}
 
@@ -207,6 +231,42 @@ const TasksPage = () => {
 						</button>
 					</div>
 				)}
+
+				<div className='bg-gray-50 rounded-xl p-4 mb-4 border-2 border-slate-600 '>
+					<div className='flex flex-wrap gap-3 items-center justify-center'>
+						{/* Sort by dropdown */}
+						<div className='flex gap-2'>
+							<button
+								onClick={() => setSortBy('date')}
+								className={`px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1 ${
+									sortBy === 'date'
+										? 'bg-purple-200 text-purple-800 border border-purple-300'
+										: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+								}`}>
+								<MdDateRange className='w-4 h-4' />
+								Sort by Date
+							</button>
+							<button
+								onClick={() => setSortBy('name')}
+								className={`px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1 ${
+									sortBy === 'name'
+										? 'bg-purple-200 text-purple-800 border border-purple-300'
+										: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300 '
+								}`}>
+								<FaSort className='w-4 h-4' />
+								Sort by Name
+							</button>
+						</div>
+
+						{/* Sort order toggle */}
+						<button
+							onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+							className='px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-sm hover:bg-purple-200 border border-purple-300'>
+							{sortOrder === 'asc' ? '↑ Ascending' : '↓ Descending'}
+						</button>
+					</div>
+				</div>
+
 				{/* Tasks list container */}
 				<div className='bg-gray-50 rounded-2xl shadow-sm p-6 border-2 border-slate-600'>
 					{isLoading ? (
@@ -241,7 +301,6 @@ const TasksPage = () => {
 								flex items-center justify-between p-4 rounded-xl border-1 border-slate-600
 								hover:bg-purple-100 transition-colors
 								${isDeleting === task.id ? 'opacity-50 pointer-events-none' : ''}
-								${isFilteredOut ? 'opacity-30 filter blur-sm' : ''}
 								${task.isCompleted ? 'bg-green-50 border-green-300' : ''}
 								
 							  `}>
