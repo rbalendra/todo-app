@@ -6,6 +6,7 @@ Todo (Task Manager) is a full stack CRUD application designed to add everyday ta
 
 ## BACKEND Table of Contents
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [API Endpoints](#api-endpoints)
@@ -24,6 +25,10 @@ Todo (Task Manager) is a full stack CRUD application designed to add everyday ta
 - **Sorting & Filtering**: Sort todos by date/name and filter by category
 - **Data Validation**: Input validation with proper error responses
 - **CORS Support**: Cross-origin resource sharing for frontend integration
+
+## Screenshots
+
+
 
 
 ## Tech Stack
