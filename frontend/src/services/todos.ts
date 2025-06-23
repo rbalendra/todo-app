@@ -57,21 +57,27 @@ export const getAllTodos = async (params?: {
 	sortOrder?: 'asc' | 'desc'
 }): Promise<Todo[]> => {
 	try {
-		const searchParams = new URLSearchParams()
+		const searchParams = new URLSearchParams() //create a new URLSearchParams object to build query parameters
 
+		// add parameters if they exist
 		if (params?.categoryId) {
-			searchParams.append('categoryId', params.categoryId.toString())
+			searchParams.append('categoryId', params.categoryId.toString()) // this is for filtering by category
+			console.log('categoryId:', params.categoryId)
 		}
 
 		if (params?.sortBy) {
-			searchParams.append('sortBy', params.sortBy)
+			searchParams.append('sortBy', params.sortBy) // this is for sorting by date or name
+			console.log('sortBy:', params.sortBy)
 		}
 		if (params?.sortOrder) {
-			searchParams.append('sortOrder', params.sortOrder)
+			searchParams.append('sortOrder', params.sortOrder) // this is for sorting order (asc or desc)
+			console.log('sortOrder:', params.sortOrder)
 		}
+		// Construct the URL with query parameters
 		const url = `${API_BASE_URL}/todos${
 			searchParams.toString() ? `?${searchParams.toString()}` : ''
 		}`
+		console.log('Fetching todos from:', url) // Log the URL being fetched
 		const response = await fetch(url)
 		if (!response.ok) {
 			throw new Error(`Error fetching todos: ${response.status}`)

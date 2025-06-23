@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public class UpdateTodoDTO {
 
-    @NotBlank(message="Name cannot be blank")
+    // @NotBlank(message="Name cannot be blank")
     private String name;
 
     private LocalDate dueDate;

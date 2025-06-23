@@ -7,7 +7,7 @@ function App() {
 		<div className='min-h-screen bg-gray-300 text-white '>
 			<div className='max-w-3xl mx-auto p-3'>
 				<Toaster
-					position='bottom-center'
+					position='top-center'
 					toastOptions={{
 						duration: 5000,
 						style: {

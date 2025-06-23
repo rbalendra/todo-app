@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import nology.io.todo.common.exceptions.NotFoundException;
-import org.springframework.web.bind.annotation.PutMapping;
 
 
 
@@ -33,24 +32,22 @@ public class TodoController {
     }
 
     /* -------------------------------- ENDPOINTS ------------------------------- */
+
 /* ------------------------------- GET TODOS ------------------------------- */
     @GetMapping
-    public ResponseEntity<List<Todo>> getAllTodos(@RequestParam(required = false) Long categoryId,
-              @RequestParam(required = false) String sortBy,
-            @RequestParam(required = false, defaultValue = "asc") String sortOrder,
-            @RequestParam(required = false) Boolean completed) throws NotFoundException {
+    public ResponseEntity<List<Todo>> getAllTodos(
+            @RequestParam(required = false) Long categoryId, //optional URL para for filtering by Category ID (key value pair such as todos?categoryId=1)
+            @RequestParam(required = false) String sortBy, //Optional URL para for sorting by a specific field (key value pair such as todos?sortBy=name)
+            @RequestParam(required = false, defaultValue = "asc") String sortOrder) throws NotFoundException { 
         List<Todo> allTodos;
         if (categoryId != null) {
-            allTodos = this.todoService.findByCategoryIdActive(categoryId);
+            allTodos = this.todoService.findByCategoryIdActive(categoryId); // get todos for specific category
         } else {
-            allTodos = this.todoService.findAllActive();
+            allTodos = this.todoService.findAllActive(); // get all active todos without filtering
         }
-
-      
-
         // Sort the results
-        if (sortBy != null) {
-            allTodos = sortTodos(allTodos, sortBy, sortOrder);
+        if (sortBy != null) { 
+            allTodos = sortTodos(allTodos, sortBy, sortOrder);// Apply sorting if requested
         }
         return new ResponseEntity<>(allTodos, HttpStatus.OK);
     }
@@ -58,14 +55,13 @@ public class TodoController {
     // this method is create to sort the todos based on the provided criteria
     private List<Todo> sortTodos(List<Todo> todos, String sortBy, String sortOrder) {
         Comparator<Todo> comparator = switch (sortBy.toLowerCase()) {
-            case "date", "duedate" -> Comparator.comparing(Todo::getDueDate);
-            case "name" -> Comparator.comparing(Todo::getName, String.CASE_INSENSITIVE_ORDER);
-            case "created" -> Comparator.comparing(Todo::getId); 
-            default -> Comparator.comparing(Todo::getDueDate);
+            case "date", "duedate" -> Comparator.comparing(Todo::getDueDate); //sort by due date
+            case "name" -> Comparator.comparing(Todo::getName, String.CASE_INSENSITIVE_ORDER); // sort by name, case insensitive
+            default -> Comparator.comparing(Todo::getDueDate); //default sort by due date if no valid sortBy is provided
         };
         
         if ("desc".equalsIgnoreCase(sortOrder)) {
-            comparator = comparator.reversed();
+            comparator = comparator.reversed(); //reverse the order if sortOrder is "desc"
         }
         
         return todos.stream().sorted(comparator).collect(Collectors.toList());

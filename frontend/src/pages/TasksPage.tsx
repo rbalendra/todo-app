@@ -138,8 +138,6 @@ const TasksPage = () => {
 		try {
 			// Update the backend
 			await updateTodo(task.id, {
-				name: task.name,
-				dueDate: task.dueDate,
 				isCompleted: !task.isCompleted,
 			})
 			setTasks((prev) =>
