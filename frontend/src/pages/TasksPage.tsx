@@ -9,45 +9,44 @@ import {
 import Modal from '../components/Modal/Modal'
 import TodoForm from '../components/Form/TodoForm'
 import { HiOutlineClipboardList } from 'react-icons/hi'
-import { FiEdit, FiTrash2 } from 'react-icons/fi'
 import { ThreeDot } from 'react-loading-indicators'
-import { MdContentCopy, MdDateRange } from 'react-icons/md'
+import { MdDateRange } from 'react-icons/md'
 import { IoIosAddCircle } from 'react-icons/io'
-import { FaCheck, FaSort } from 'react-icons/fa'
+import { FaSort } from 'react-icons/fa'
 import toast from 'react-hot-toast'
+import TaskCard from '../components/TaskCard/TaskCard'
 
 const TasksPage = () => {
 	// managing states for tasks and modal
-	const [tasks, setTasks] = useState<Todo[]>([])
+	const [tasks, setTasks] = useState<Todo[]>([]) // main array of todo tasks from API
 	const [isModalOpen, setIsModalOpen] = useState(false)
-	const [editingTask, setEditingTask] = useState<Todo | undefined>(undefined)
+	const [editingTask, setEditingTask] = useState<Todo | undefined>(undefined) //Holds the task data being edited (undefined when creating a new task)
 
 	// states for loading and errors
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState<string>('')
-	const [isDeleting, setIsDeleting] = useState<number | null>(null)
+	const [isDeleting, setIsDeleting] = useState<number | null>(null) // loading indicator on button
 
+	//ID of the currently selected category for filtering tasks
 	const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
 		null
 	)
 
-	// states for sorting
+	//  Controls how tasks are sorted (by date or by name)
 	const [sortBy, setSortBy] = useState<'date' | 'name'>('date')
 	const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-	// const [showCompleted, setShowCompleted] = useState<boolean | undefined>(
-	// 	undefined
-	// )
 
-	// Add these computed values for task counts
+	// computed values
 	const totalTasks = tasks.length
 	const completedCount = tasks.filter((task) => task.isCompleted).length
 	const activeCount = totalTasks - completedCount
-	// fetch tasks when component mounts
+
+	/* ----- Fetches tasks from API whenever filters or sort options change ----- */
+
 	useEffect(() => {
 		fetchTasks()
 	}, [selectedCategoryId, sortBy, sortOrder])
 
-	// Function to fetch all tasks from API
 	const fetchTasks = async () => {
 		try {
 			const response = await getAllTodos({
@@ -64,6 +63,7 @@ const TasksPage = () => {
 		}
 	}
 
+	/* ---------------------- HANDLER FUNCTIONS FOR EVENTS ---------------------- */
 	// open modal for creating new task
 	const handleAddTask = () => {
 		setEditingTask(undefined) // reset fields if you were editing previously
@@ -77,6 +77,7 @@ const TasksPage = () => {
 	}
 
 	// After task is created/update: refresh the list and close modal
+	//called from todo form component
 	const handleTaskCreated = () => {
 		fetchTasks()
 		handleCloseModal()
@@ -90,6 +91,7 @@ const TasksPage = () => {
 			setIsModalOpen(true)
 		}
 	}
+
 	//handle delete task and update UI
 	const handleDeleteTask = async (id: number) => {
 		setIsDeleting(id)
@@ -106,7 +108,7 @@ const TasksPage = () => {
 		}
 	}
 
-	//handle duplicatation tasks
+	//handle duplicatation tasks by copying all task propers except completion status and adds (copy)
 	const handleDuplicateTask = async (taskToDuplicate: Todo) => {
 		try {
 			// Create the duplicate task data
@@ -128,22 +130,27 @@ const TasksPage = () => {
 			toast.error('Failed to duplicate task. Please try again.')
 		}
 	}
-	//toggle filter on click
+
+	//toggle filter on click and off
+	//If the same category is clicked again, removes the filter
 	const handleFilterByCategory = (categoryId: number) => {
 		setSelectedCategoryId((prev) => (prev === categoryId ? null : categoryId))
 	}
 
-	//handle toggle function
+	//handle toggle function for task's completion status
+	// Updates both backend and local state, shows appropriate toast message
 	const handleToggleComplete = async (task: Todo) => {
 		try {
 			// Update the backend
 			await updateTodo(task.id, {
 				isCompleted: !task.isCompleted,
 			})
-			setTasks((prev) =>
-				prev.map((t) =>
-					t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t
-				)
+			//update local state
+			setTasks(
+				(prev) =>
+					prev.map((t) =>
+						t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t
+					) // !t.isCompleted toggles the completion status: if true, sets to false and vice versa
 			)
 			if (!task.isCompleted) {
 				toast.success('Task completed! Well done! 🎉')
@@ -157,20 +164,7 @@ const TasksPage = () => {
 			toast.error('Failed to update task. Please try again.')
 		}
 	}
-
-	// Helper function to check if a date is today or in the past
-	const isOverdue = (dateString: string): boolean => {
-		// this function will return a boolean
-		const today = new Date() // (eg: June 16, 2025, 11:30 AM)
-		today.setHours(0, 0, 0, 0) // Reset time part for accurate date comparison
-
-		const dueDate = new Date(dateString) //dateString to obj
-		dueDate.setHours(0, 0, 0, 0)
-		// console.log(dueDate)
-		// console.log(today)
-		return dueDate <= today // today or day in the past
-	}
-
+	/* -------------------------- CONDITIONAL RENDERING ------------------------- */
 	// Error display component if backend is not running
 	if (error) {
 		return (
@@ -195,6 +189,7 @@ const TasksPage = () => {
 			</div>
 		)
 	}
+	/* -------------------------------------------------------------------------- */
 	return (
 		<div className='min-h-screen py-8 rounded-4xl '>
 			<div className='max-w-2xl mx-auto'>
@@ -219,7 +214,7 @@ const TasksPage = () => {
 					</div>
 				</div>
 
-				{/* Clear filter button */}
+				{/* Clear filter button - only shown when a category filter is active  */}
 				{selectedCategoryId && (
 					<div className='mb-4 text-right'>
 						<button
@@ -232,7 +227,7 @@ const TasksPage = () => {
 
 				<div className='bg-gray-50 rounded-xl p-4 mb-4 border-2 border-slate-600 '>
 					<div className='flex flex-wrap gap-3 items-center justify-center'>
-						{/* Sort by dropdown */}
+						{/* Sort by buttons (date or name) */}
 						<div className='flex gap-2'>
 							<button
 								onClick={() => setSortBy('date')}
@@ -265,7 +260,7 @@ const TasksPage = () => {
 					</div>
 				</div>
 
-				{/* Tasks list container */}
+				{/* Tasks list container: displays loading, empty, or task list states  */}
 				<div className='bg-gray-50 rounded-2xl shadow-sm p-6 border-2 border-slate-600'>
 					{isLoading ? (
 						// Loading state
@@ -283,118 +278,21 @@ const TasksPage = () => {
 							</p>
 						</div>
 					) : (
-						//List of tasks
+						// List of tasks using TaskCard component
 						<div className='space-y-3'>
-							{tasks.map((task) => {
-								const isFilteredOut =
-									selectedCategoryId !== null &&
-									!task.todoCategories.some(
-										(tc) => tc.category.id === selectedCategoryId
-									)
-
-								return (
-									<div
-										key={task.id}
-										className={`
-								flex items-center justify-between p-4 rounded-xl border-1 border-slate-600
-								hover:bg-purple-100 transition-colors
-								${isDeleting === task.id ? 'opacity-50 pointer-events-none' : ''}
-								${task.isCompleted ? 'bg-green-50 border-green-300' : ''}
-								
-							  `}>
-										{' '}
-										{/* Left side - Task info */}
-										<div className='flex-1'>
-											<h3
-												className={`font-medium text-gray-600 mb-1 text-2xl ${
-													task.isCompleted // Use backend data
-														? 'line-through decoration-pink-500 '
-														: ''
-												}`}>
-												{task.name}
-											</h3>
-											{isOverdue(task.dueDate) ? (
-												<p className='text-sm text-red-500 font-bold'>
-													OVERDUE
-												</p>
-											) : (
-												<p className='text-sm text-gray-500'>
-													Due: {task.dueDate}
-												</p>
-											)}
-
-											{/* Categories display */}
-											{task.todoCategories &&
-												task.todoCategories.length > 0 && (
-													<div className='flex flex-wrap gap-1 mt-2'>
-														{task.todoCategories.map((todoCat) => (
-															<span
-																key={todoCat.id}
-																onClick={() =>
-																	handleFilterByCategory(todoCat.category.id)
-																}
-																className='bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full border-1 cursor-pointer hover:bg-purple-200 transition-colors'
-																style={
-																	selectedCategoryId === todoCat.category.id
-																		? {
-																				backgroundColor: '#d8b4fe',
-																				fontWeight: 'bold',
-																				textTransform: 'uppercase',
-																		  }
-																		: {}
-																}>
-																{todoCat.category.name}
-															</span>
-														))}
-													</div>
-												)}
-										</div>
-										{/* Right side - Action buttons */}
-										<div className='flex items-center gap-2 ml-4'>
-											{/* Add check button before edit button */}
-											<button
-												onClick={() => handleToggleComplete(task)}
-												className={`p-2 rounded-full transition-colors ${
-													task.isCompleted
-														? 'bg-green-500 text-white hover:bg-green-600'
-														: 'bg-gray-200 text-gray-400 hover:bg-green-500 hover:text-white transition-all ease-in-out duration-500'
-												}`}
-												title={
-													task.isCompleted
-														? 'Mark as incomplete'
-														: 'Mark as complete'
-												}>
-												<FaCheck className='w-6 h-6' />
-											</button>
-											{/* Edit button */}
-											<button
-												onClick={() => handleEditTask(task.id)}
-												className='text-gray-400 hover:text-green-500 p-2 rounded-lg hover:bg-green-50 transition-colors border-1'
-												title='Edit task'>
-												<FiEdit className='w-4 h-4' />
-											</button>
-											{/* Duplicate button */}
-											<button
-												onClick={() => handleDuplicateTask(task)}
-												className='text-gray-400 hover:text-blue-500 p-2 rounded-lg hover:bg-blue-50 transition-colors border-1'
-												title='Duplicate task'>
-												<MdContentCopy className='w-4 h-4' />
-											</button>
-											{/* Delete button */}
-											<button
-												onClick={() => handleDeleteTask(task.id)}
-												className='text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors border-1'
-												title='Delete task'>
-												{isDeleting === task.id ? (
-													<ThreeDot color='#ef4444' size='small' />
-												) : (
-													<FiTrash2 className='w-4 h-4' />
-												)}
-											</button>
-										</div>
-									</div>
-								)
-							})}
+							{tasks.map((task) => (
+								<TaskCard
+									key={task.id}
+									task={task}
+									isDeleting={isDeleting}
+									selectedCategoryId={selectedCategoryId}
+									onToggleComplete={handleToggleComplete}
+									onEdit={handleEditTask}
+									onDuplicate={handleDuplicateTask}
+									onDelete={handleDeleteTask}
+									onFilterByCategory={handleFilterByCategory}
+								/>
+							))}
 						</div>
 					)}
 				</div>
