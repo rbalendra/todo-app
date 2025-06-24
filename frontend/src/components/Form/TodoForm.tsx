@@ -1,40 +1,56 @@
-import { useEffect, useState } from 'react'
-
-import {
-	createTodo,
-	getAllCategories,
-	updateTodo,
-	type Category,
-	type Todo,
-} from '../../services/todos'
-import Button from '../Button/Button'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useState, useEffect } from 'react'
+import { getAllCategories, updateTodo, createTodo } from '../../services/todos'
 import CategoryManager from '../CategoryManager/CategoryManager'
-import toast from 'react-hot-toast'
+import { todoFormSchema, type TodoFormData } from './schema'
 
 interface TodoFormProps {
-	onSuccess: () => void //  Refreshes todo list after creation
-	onClose: () => void // Closes the modal/form
+	onSuccess: () => void
+	onClose: () => void
 	initialData?: Todo
 }
 
-export default function TodoForm({
-	onSuccess,
-	onClose,
-	initialData,
-}: TodoFormProps) {
-	// Main form state - stores all todo information
-	const [formData, setFormData] = useState({
-		id: initialData?.id, // If editing, store the todo ID
-		name: initialData?.name ?? '', // Todo name (empty string if creating new)
-		dueDate: initialData?.dueDate ?? '',
-		// Extract category IDs from existing todo, or empty array if creating new
-		categoryIds: initialData?.todoCategories.map((tc) => tc.category.id) ?? [],
-	})
+interface Todo {
+	id: number
+	name: string
+	dueDate: string
+	isCompleted: boolean
+	isArchived: boolean
+	todoCategories: {
+		id: number
+		category: {
+			id: number
+			name: string
+		}
+	}[]
+}
 
-	// Loading states
-	const [isSubmitting, setIsSubmitting] = useState(false) // to show creating in button
-	const [categories, setCategories] = useState<Category[]>([]) // store all avail categories from db
-	const [isLoadingCategories, setIsLoadingCategories] = useState(true) // to show loading categories while api fetch
+interface Category {
+	id: number
+	name: string
+}
+
+const TodoForm = ({ onSuccess, onClose, initialData }: TodoFormProps) => {
+	const [categories, setCategories] = useState<Category[]>([])
+	const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+
+	const {
+		register, // connects form inputs to react-hook-form
+		handleSubmit, // handles form submission
+		formState: { errors }, // contains zod powered errors
+		watch, // read current categoryIds value
+		setValue, // update CategoryId'
+		reset,
+	} = useForm<TodoFormData>({
+		resolver: zodResolver(todoFormSchema),
+		defaultValues: {
+			name: initialData?.name || '',
+			dueDate: initialData?.dueDate || '',
+			categoryIds:
+				initialData?.todoCategories?.map((cat) => cat.category.id) || [],
+		},
+	})
 
 	/* ------------------------- data fetching from API ------------------------- */
 	useEffect(() => {
@@ -52,143 +68,105 @@ export default function TodoForm({
 		fetchCategories()
 	}, [])
 
-	//update the form when initialdate changes (for editing)
 	useEffect(() => {
 		if (initialData) {
-			setFormData({
-				id: initialData.id,
+			reset({
 				name: initialData.name,
 				dueDate: initialData.dueDate,
 				categoryIds:
 					initialData.todoCategories.map((tc) => tc.category.id) ?? [],
 			})
 		}
-	}, [initialData])
+	}, [initialData, reset])
 
-	/* ---------------------------- Handler fucntions --------------------------- */
-	/* ------------------------- handles form submission ------------------------ */
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault()
-		if (!formData.name.trim() || !formData.dueDate) return
-
-		setIsSubmitting(true)
-
+	const onSubmit = async (data: TodoFormData) => {
 		try {
-			if (formData.id) {
-				await updateTodo(formData.id, {
-					name: formData.name.trim(),
-					dueDate: formData.dueDate,
-					categoryIds: formData.categoryIds,
-				})
-				toast.success('Task updated successfully! ✏️')
+			console.log('validated form data', data)
+
+			if (initialData) {
+				// Update existing todo
+				await updateTodo(initialData.id, data)
 			} else {
-				await createTodo({
-					name: formData.name.trim(),
-					dueDate: formData.dueDate,
-					categoryIds: formData.categoryIds,
-				})
-				toast.success('New task created successfully! ✨')
+				// Create new todo
+				await createTodo(data)
 			}
-			onSuccess()
-			onClose()
+
+			onSuccess() // Call success callback
 		} catch (error) {
-			console.error('Failed to create todo:', error)
-			toast.error(
-				formData.id
-					? 'Failed to update task. Please try again.'
-					: 'Failed to create task. Please try again.'
-			)
-		} finally {
-			setIsSubmitting(false)
+			console.error('Failed to save todo:', error)
+			// You might want to show an error message to the user
 		}
 	}
+	const selectedIds = watch('categoryIds') as number[] // always current 🩺
 
-	/* ------------------- handler function for input changes ------------------- */
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target
-		setFormData((prev) => ({
-			...prev,
-			[name]: value,
-		}))
-	}
-
-	/* ------------------------ Category handler function ----------------------- */
 	const handleCategoryToggle = (categoryId: number) => {
-		setFormData((prev) => ({
-			...prev,
-			categoryIds: prev.categoryIds.includes(categoryId)
-				? prev.categoryIds.filter((id) => id !== categoryId)
-				: [...prev.categoryIds, categoryId],
-		}))
-	}
+		const next = selectedIds.includes(categoryId)
+			? selectedIds.filter((id) => id !== categoryId) // remove
+			: [...selectedIds, categoryId] // add
 
-	// Handle when CategoryManager updates the categories list (after creating/deleting)
-	const handleCategoriesUpdate = (updatedCategories: Category[]) => {
-		setCategories(updatedCategories)
+		setValue('categoryIds', next, { shouldValidate: true })
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className='space-y-4'>
-			{/* Task Name */}
+		<form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+			{/* --- Task Name --- */}
 			<div>
 				<label className='block text-sm font-medium text-gray-700 mb-2'>
 					Task Name
 				</label>
+
 				<input
 					type='text'
-					name='name'
-					value={formData.name}
-					onChange={handleChange}
-					required
-					className='w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500  outline-none transition-all duration-200 text-gray-900'
+					{...register('name')}
+					className='w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all duration-200 text-gray-900'
 					placeholder='Enter task name'
 				/>
+				{/* Zod error message */}
+				{errors.name && (
+					<p className='text-red-600 text-sm mt-1'>{errors.name.message}</p>
+				)}
 			</div>
 
-			{/* Due Date */}
+			{/* --- Due Date --- */}
 			<div>
 				<label className='block text-sm font-medium text-gray-700 mb-1'>
 					Due Date
 				</label>
+
 				<input
 					type='date'
-					name='dueDate'
-					value={formData.dueDate}
-					onChange={handleChange}
-					required
-					className='w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500  outline-none transition-all duration-200 text-gray-900'
+					{...register('dueDate')} // 🔗 RHF + Zod
+					className='w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all duration-200 text-gray-900'
 				/>
+
+				{errors.dueDate && (
+					<p className='text-red-600 text-sm mt-1'>{errors.dueDate.message}</p>
+				)}
 			</div>
 
 			<CategoryManager
-				categories={categories} // Pass current categories list
-				selectedCategoryIds={formData.categoryIds} // Pass which categories are selected for this todo
-				onCategoriesUpdate={handleCategoriesUpdate} // Pass function to update categories when new ones are created/deleted
-				onCategoryToggle={handleCategoryToggle} // Pass function to handle checkbox clicks
-				isLoading={isLoadingCategories} // Pass loading state
+				categories={categories}
+				selectedCategoryIds={selectedIds}
+				onCategoriesUpdate={setCategories}
+				onCategoryToggle={handleCategoryToggle}
+				isLoading={isLoadingCategories}
 			/>
-
-			{/* Form Buttons */}
-			<div className='flex gap-3 pt-2'>
+			{/* Add form buttons */}
+			<div className='flex gap-2 pt-4'>
 				<button
 					type='submit'
-					disabled={isSubmitting}
-					className='flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]'>
-					{isSubmitting
-						? formData.id
-							? 'Saving...'
-							: 'Creating...'
-						: formData.id
-						? 'Save Changes'
-						: 'Create Task'}
+					className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors'>
+					{initialData ? 'Update Task' : 'Create Task'}
 				</button>
 				<button
 					type='button'
 					onClick={onClose}
-					className='flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]'>
+					className='px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors'>
 					Cancel
 				</button>
 			</div>
 		</form>
 	)
 }
+
+export default TodoForm

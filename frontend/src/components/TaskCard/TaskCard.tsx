@@ -8,7 +8,7 @@ interface TaskCardProps {
 	task: Todo
 	isDeleting: number | null
 	selectedCategoryId: number | null
-	onToggleComplete: (task: Todo) => Promise<void>
+	onToggleComplete: (task: Todo) => Promise<void> // toggle task completion status
 	onEdit: (id: number) => void
 	onDuplicate: (task: Todo) => Promise<void>
 	onDelete: (id: number) => Promise<void>
