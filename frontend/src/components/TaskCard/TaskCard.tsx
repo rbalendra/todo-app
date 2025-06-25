@@ -51,7 +51,9 @@ const TaskCard = ({
 					{task.name}
 				</h3>
 				{isOverdue(task.dueDate) ? (
-					<p className='text-sm text-red-500 font-bold'>OVERDUE</p>
+					<p className='text-sm text-red-500 font-bold'>
+						OVERDUE: {task.dueDate}
+					</p>
 				) : (
 					<p className='text-sm text-gray-500'>Due: {task.dueDate}</p>
 				)}

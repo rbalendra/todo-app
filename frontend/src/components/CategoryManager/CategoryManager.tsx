@@ -78,7 +78,7 @@ const CategoryManager = ({
 			console.error('Failed to delete category:', error)
 		}
 	}
-
+/* -------------------------------------------------------------------------- */
 	return (
 		<div>
 			<label className='block text-sm font-medium text-gray-700 mb-3'>
@@ -124,7 +124,7 @@ const CategoryManager = ({
 					</div>
 				)}
 			</div>
-
+/* -------------------------------------------------------------------------- */
 			{/* Section for creating new categories */}
 			<div className='mt-3 pt-3 border-t border-purple-900'>
 				<label className='block text-sm font-medium text-gray-700 mb-2'>

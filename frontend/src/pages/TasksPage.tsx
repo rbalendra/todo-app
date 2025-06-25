@@ -140,19 +140,22 @@ const TasksPage = () => {
 	//handle toggle function for task's completion status
 	// Updates both backend and local state, shows appropriate toast message
 	const handleToggleComplete = async (task: Todo) => {
+		// Calculate the new completion status once
+		const newCompletionStatus = !task.isCompleted
+		//update local state
+		setTasks(
+			(prev) =>
+				prev.map((t) =>
+					t.id === task.id ? { ...t, isCompleted: newCompletionStatus } : t
+				) // !t.isCompleted toggles the completion status: if true, sets to false and vice versa
+		)
 		try {
-			// Update the backend
 			await updateTodo(task.id, {
-				isCompleted: !task.isCompleted,
+				isCompleted: newCompletionStatus, // ✅ Use the calculated value
 			})
-			//update local state
-			setTasks(
-				(prev) =>
-					prev.map((t) =>
-						t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t
-					) // !t.isCompleted toggles the completion status: if true, sets to false and vice versa
-			)
-			if (!task.isCompleted) {
+			// Update the backend
+
+			if (newCompletionStatus) {
 				toast.success('Task completed! Well done! 🎉')
 			} else {
 				toast('Task marked as incomplete', {
@@ -160,6 +163,11 @@ const TasksPage = () => {
 				})
 			}
 		} catch (error) {
+			setTasks((prev) =>
+				prev.map((t) =>
+					t.id === task.id ? { ...t, isCompleted: task.isCompleted } : t
+				)
+			)
 			setError('Failed to update task. Please try again.' + error)
 			toast.error('Failed to update task. Please try again.')
 		}
@@ -172,7 +180,7 @@ const TasksPage = () => {
 				<div className='max-w-2xl mx-auto'>
 					<div className='bg-red-50 border border-red-200 rounded-2xl p-6 text-center'>
 						<div className=' mb-4'>
-							<div className='text-4xl mb-4'>⚠️</div>
+							<div className='text-7xl mb-4'>⚠️</div>
 						</div>
 
 						<h2 className='text-red-800 text-xl font-semibold mb-2'>
@@ -199,17 +207,9 @@ const TasksPage = () => {
 						<div className='flex items-center gap-3'>
 							<HiOutlineClipboardList className='text-3xl text-slate-900' />
 							<h1 className='text-3xl font-bold text-gray-800'>TASK MANAGER</h1>
-							<div className='pl-10 flex gap-3 text-sm'>
-								<span className='bg-green-100 text-green-700 px-4 py-1 rounded-full border-1'>
-									Completed: {completedCount}
-								</span>
-								<span className='bg-orange-100 text-orange-700 px-4 py-1 rounded-full border-1'>
-									Active: {activeCount}
-								</span>
-							</div>
 						</div>
 						<button onClick={handleAddTask}>
-							<IoIosAddCircle className='w-10 h-10 bg-purple-400 hover:bg-purple-900 rounded-full transition-colors shadow-sm hover:shadow-sm' />
+							<IoIosAddCircle className='w-15 h-15 bg-green-600 hover:bg-purple-900 rounded-full transition-colors shadow-sm hover:shadow-sm' />
 						</button>
 					</div>
 				</div>
@@ -227,24 +227,33 @@ const TasksPage = () => {
 
 				<div className='bg-gray-50 rounded-xl p-4 mb-4 border-2 border-slate-600 '>
 					<div className='flex flex-wrap gap-3 items-center justify-center'>
+						<div className='flex gap-2'>
+							<div className='select-none px-3 py-1 bg-green-100 text-green-800 rounded-lg text-sm border border-green-300 flex items-center gap-1'>
+								Completed: {completedCount}
+							</div>
+							<div className='select-none px-3 py-1 bg-orange-100 text-orange-800 rounded-lg text-sm border border-orange-300 flex items-center gap-1'>
+								Active: {activeCount}
+							</div>
+						</div>
+
 						{/* Sort by buttons (date or name) */}
 						<div className='flex gap-2'>
 							<button
 								onClick={() => setSortBy('date')}
-								className={`px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1 ${
+								className={`cursor-pointer px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1 ${
 									sortBy === 'date'
-										? 'bg-purple-200 text-purple-800 border border-purple-300'
-										: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+										? 'cursor-pointer bg-purple-200 text-purple-800 border border-purple-300'
+										: 'cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
 								}`}>
 								<MdDateRange className='w-4 h-4' />
 								Sort by Date
 							</button>
 							<button
 								onClick={() => setSortBy('name')}
-								className={`px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1 ${
+								className={`cursor-pointer px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1 ${
 									sortBy === 'name'
-										? 'bg-purple-200 text-purple-800 border border-purple-300'
-										: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300 '
+										? 'cursor-pointer bg-purple-200 text-purple-800 border border-purple-300'
+										: 'cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300 '
 								}`}>
 								<FaSort className='w-4 h-4' />
 								Sort by Name
@@ -254,7 +263,7 @@ const TasksPage = () => {
 						{/* Sort order toggle */}
 						<button
 							onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-							className='px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-sm hover:bg-purple-200 border border-purple-300'>
+							className='px-3 py-1  cursor-pointer bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 border border-purple-300'>
 							{sortOrder === 'asc' ? '↑ Ascending' : '↓ Descending'}
 						</button>
 					</div>

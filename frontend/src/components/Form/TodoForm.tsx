@@ -6,12 +6,13 @@ import CategoryManager from '../CategoryManager/CategoryManager'
 import { todoFormSchema, type TodoFormData } from './schema'
 
 interface TodoFormProps {
-	onSuccess: () => void
-	onClose: () => void
-	initialData?: Todo
+	onSuccess: () => void //call after save so parent refreshes list.
+	onClose: () => void // call to close the form modal
+	initialData?: Todo // optional initial data for editing an existing todo
 }
 
 interface Todo {
+	// full shape of todo coming from backend
 	id: number
 	name: string
 	dueDate: string
@@ -41,10 +42,11 @@ const TodoForm = ({ onSuccess, onClose, initialData }: TodoFormProps) => {
 		formState: { errors }, // contains zod powered errors
 		watch, // read current categoryIds value
 		setValue, // update CategoryId'
-		reset,
+		reset, // load new defaults when editing
 	} = useForm<TodoFormData>({
 		resolver: zodResolver(todoFormSchema),
 		defaultValues: {
+			// pre fill form with initial data if available
 			name: initialData?.name || '',
 			dueDate: initialData?.dueDate || '',
 			categoryIds:
@@ -53,6 +55,7 @@ const TodoForm = ({ onSuccess, onClose, initialData }: TodoFormProps) => {
 	})
 
 	/* ------------------------- data fetching from API ------------------------- */
+	// fetch categories on mount
 	useEffect(() => {
 		const fetchCategories = async () => {
 			try {
@@ -68,6 +71,7 @@ const TodoForm = ({ onSuccess, onClose, initialData }: TodoFormProps) => {
 		fetchCategories()
 	}, [])
 
+	// repopoulate form with initial data when user clicks "EDIT" on a todo
 	useEffect(() => {
 		if (initialData) {
 			reset({
@@ -79,15 +83,16 @@ const TodoForm = ({ onSuccess, onClose, initialData }: TodoFormProps) => {
 		}
 	}, [initialData, reset])
 
-	const onSubmit = async (data: TodoFormData) => {
+	/* ------------------------- SUBMIT HANDLER FUNCTION ------------------------ */
+	const onSubmit = async (data: TodoFormData): Promise<void> => {
 		try {
 			console.log('validated form data', data)
 
 			if (initialData) {
-				// Update existing todo
+				// Update existing todo - edit
 				await updateTodo(initialData.id, data)
 			} else {
-				// Create new todo
+				// Create new todo - new task
 				await createTodo(data)
 			}
 
@@ -97,7 +102,7 @@ const TodoForm = ({ onSuccess, onClose, initialData }: TodoFormProps) => {
 			// You might want to show an error message to the user
 		}
 	}
-	const selectedIds = watch('categoryIds') as number[] // always current 🩺
+	const selectedIds = watch('categoryIds') || [] // always read current list of categoryIds
 
 	const handleCategoryToggle = (categoryId: number) => {
 		const next = selectedIds.includes(categoryId)
@@ -143,7 +148,7 @@ const TodoForm = ({ onSuccess, onClose, initialData }: TodoFormProps) => {
 					<p className='text-red-600 text-sm mt-1'>{errors.dueDate.message}</p>
 				)}
 			</div>
-
+			{/* passing categories and selectedIds to CategoryManager */}
 			<CategoryManager
 				categories={categories}
 				selectedCategoryIds={selectedIds}

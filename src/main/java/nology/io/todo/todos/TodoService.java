@@ -3,7 +3,7 @@ package nology.io.todo.todos;
 import java.util.Set;
 import java.util.List;
 
-
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import nology.io.todo.category.Category;
@@ -25,8 +25,9 @@ public class TodoService {
 
 /* -------------------------- get all active todos -------------------------- */
 
-public List<Todo> findAllActive() {
-    return todoRepository.findByIsArchivedFalse(); // returns books that are not archived
+public List<Todo> findAllActive(String sortBy, String sortOrder) {
+    Sort sort = createSort(sortBy, sortOrder);
+    return todoRepository.findByIsArchivedFalse(sort);
 }
 
 /* -------------------------- GET SINGLE TODO BY ID ------------------------- */
@@ -41,11 +42,24 @@ public Todo findById(Long id) throws NotFoundException {
 /* -------------------------- get todos by category ------------------------- */
 
     // fetch all non-archived todos belonging to specific category ID and validates if the category exists
-    public List<Todo> findByCategoryIdActive(Long categoryId) throws NotFoundException {
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NotFoundException("Category not found " + categoryId));
+ 
+    public List<Todo> findByCategoryIdActive(Long categoryId, String sortBy, String sortOrder) {
+        Sort sort = createSort(sortBy, sortOrder);
+        return todoRepository.findByTodoCategoriesCategoryIdAndIsArchivedFalse(categoryId, sort);
+    }
+
+    private Sort createSort(String sortBy, String sortOrder) {
+        String field = switch (sortBy != null ? sortBy.toLowerCase() : "duedate") {
+            case "name" -> "name";
+            case "date", "duedate" -> "dueDate";
+            default -> "dueDate";
+        };
         
-        return todoRepository.findByTodoCategoriesCategoryIdAndIsArchivedFalse(categoryId);
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortOrder) 
+            ? Sort.Direction.DESC 
+            : Sort.Direction.ASC;
+        
+        return Sort.by(direction, field);
     }
 
     /* -------------------------- // Create a new todo -------------------------- */

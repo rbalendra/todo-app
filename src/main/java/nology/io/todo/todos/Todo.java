@@ -80,7 +80,7 @@ public class Todo {
         this.dueDate = dueDate;
     }
 
-    public boolean isCompleted() {
+    public boolean getIsCompleted() {
         return isCompleted;
     }
 

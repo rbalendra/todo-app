@@ -1,8 +1,6 @@
 package nology.io.todo.todos;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,36 +34,20 @@ public class TodoController {
 /* ------------------------------- GET TODOS ------------------------------- */
     @GetMapping
     public ResponseEntity<List<Todo>> getAllTodos(
-            @RequestParam(required = false) Long categoryId, //optional URL para for filtering by Category ID (key value pair such as todos?categoryId=1)
-            @RequestParam(required = false) String sortBy, //Optional URL para for sorting by a specific field (key value pair such as todos?sortBy=name)
-            @RequestParam(required = false, defaultValue = "asc") String sortOrder) throws NotFoundException { 
-        List<Todo> allTodos;
-        if (categoryId != null) {
-            allTodos = this.todoService.findByCategoryIdActive(categoryId); // get todos for specific category
-        } else {
-            allTodos = this.todoService.findAllActive(); // get all active todos without filtering
-        }
-        // Sort the results
-        if (sortBy != null) { 
-            allTodos = sortTodos(allTodos, sortBy, sortOrder);// Apply sorting if requested
-        }
-        return new ResponseEntity<>(allTodos, HttpStatus.OK);
+        @RequestParam(required = false) Long categoryId,
+        @RequestParam(required = false) String sortBy,
+        @RequestParam(required = false, defaultValue = "asc") String sortOrder) throws NotFoundException { 
+    
+    List<Todo> allTodos;
+    if (categoryId != null) {
+        allTodos = this.todoService.findByCategoryIdActive(categoryId, sortBy, sortOrder);
+    } else {
+        allTodos = this.todoService.findAllActive(sortBy, sortOrder);
     }
     
-    // this method is create to sort the todos based on the provided criteria
-    private List<Todo> sortTodos(List<Todo> todos, String sortBy, String sortOrder) {
-        Comparator<Todo> comparator = switch (sortBy.toLowerCase()) {
-            case "date", "duedate" -> Comparator.comparing(Todo::getDueDate); //sort by due date
-            case "name" -> Comparator.comparing(Todo::getName, String.CASE_INSENSITIVE_ORDER); // sort by name, case insensitive
-            default -> Comparator.comparing(Todo::getDueDate); //default sort by due date if no valid sortBy is provided
-        };
-        
-        if ("desc".equalsIgnoreCase(sortOrder)) {
-            comparator = comparator.reversed(); //reverse the order if sortOrder is "desc"
-        }
-        
-        return todos.stream().sorted(comparator).collect(Collectors.toList());
-    }
+    return new ResponseEntity<>(allTodos, HttpStatus.OK);
+}
+    
 
     /* ----------------------------- GET TODO BY ID ----------------------------- */
     @GetMapping("/{id}")

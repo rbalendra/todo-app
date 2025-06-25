@@ -1,3 +1,4 @@
+// Denfine the shape of the data we expect from the API
 export interface TodoCategory {
 	id: number
 	category: {
@@ -32,6 +33,7 @@ export interface CreateCategoryDTO {
 }
 
 export interface UpdateTodoDTO {
+	// optional for partial updates
 	name?: string
 	dueDate?: string
 	isCompleted?: boolean
@@ -39,26 +41,18 @@ export interface UpdateTodoDTO {
 	isArchived?: boolean
 }
 
-// export interface UpdateTodoDTO {
-// 	name?: string
-// 	dueDate?: string
-// 	isCompleted?: boolean
-// 	isArchived?: boolean
-// 	categoryIds?: number[]
-// }
-
 const API_BASE_URL = 'http://localhost:8080'
 
-//get all active todos
+//get all active todos with optional filtering and sorting
 export const getAllTodos = async (params?: {
-	categoryId?: number
-	sortBy?: 'date' | 'name'
-	sortOrder?: 'asc' | 'desc'
+	categoryId?: number // Filter by specific category
+	sortBy?: 'date' | 'name' // Sort by due date or task name
+	sortOrder?: 'asc' | 'desc' // Ascending or descending order
 }): Promise<Todo[]> => {
 	try {
-		const searchParams = new URLSearchParams() //create a new URLSearchParams object to build query parameters
+		const searchParams = new URLSearchParams() // URLSearchParams helps build query strings like "?categoryId=1&sortBy=date"
 
-		// add parameters if they exist
+		// add parameters if they exist (optional)
 		if (params?.categoryId) {
 			searchParams.append('categoryId', params.categoryId.toString()) // this is for filtering by category
 			console.log('categoryId:', params.categoryId)
@@ -73,11 +67,13 @@ export const getAllTodos = async (params?: {
 			console.log('sortOrder:', params.sortOrder)
 		}
 		// Construct the URL with query parameters
+		// Build final URL: either "/todos" or "/todos?categoryId=1&sortBy=date"
 		const url = `${API_BASE_URL}/todos${
 			searchParams.toString() ? `?${searchParams.toString()}` : ''
 		}`
 		console.log('Fetching todos from:', url) // Log the URL being fetched
-		const response = await fetch(url)
+
+		const response = await fetch(url) // make GET request to the API
 		if (!response.ok) {
 			throw new Error(`Error fetching todos: ${response.status}`)
 		}
@@ -88,7 +84,7 @@ export const getAllTodos = async (params?: {
 	}
 }
 
-//create todo
+//create todo - POST request to create a new todo
 export const createTodo = async (todoData: CreateTodoDTO): Promise<Todo> => {
 	const response = await fetch(`${API_BASE_URL}/todos`, {
 		method: 'POST',
@@ -100,7 +96,7 @@ export const createTodo = async (todoData: CreateTodoDTO): Promise<Todo> => {
 	return await response.json()
 }
 
-//delete todo
+//delete todo - DELETE request to specific ID
 export const deleteTodo = async (id: number): Promise<void> => {
 	const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
 		method: 'DELETE',
@@ -110,10 +106,10 @@ export const deleteTodo = async (id: number): Promise<void> => {
 	}
 }
 
-// update Todo
+// update Todo - PATCH request for partial updates
 export const updateTodo = async (
 	id: number,
-	updateData: UpdateTodoDTO
+	updateData: UpdateTodoDTO // Only the fields that changed
 ): Promise<Todo> => {
 	const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
 		method: 'PATCH',
@@ -124,7 +120,7 @@ export const updateTodo = async (
 	return await response.json()
 }
 
-// Get all categories
+// Get all categories - simple GET request
 export const getAllCategories = async (): Promise<Category[]> => {
 	try {
 		const response = await fetch(`${API_BASE_URL}/categories`)
@@ -137,9 +133,9 @@ export const getAllCategories = async (): Promise<Category[]> => {
 		throw error
 	}
 }
-// create categories
+// create categories - POST request
 export const createCategory = async (
-	categoryData: CreateCategoryDTO
+	categoryData: CreateCategoryDTO // only name is required
 ): Promise<Category> => {
 	const response = await fetch(`${API_BASE_URL}/categories`, {
 		method: 'POST',
@@ -151,7 +147,7 @@ export const createCategory = async (
 	return await response.json()
 }
 
-//delete categories
+//delete categories - DELETE request
 export const deleteCategory = async (id: number): Promise<void> => {
 	const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
 		method: 'DELETE',
