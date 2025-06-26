@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState, useEffect } from 'react'
 import { getAllCategories, updateTodo, createTodo } from '../../services/todos'
@@ -44,7 +44,7 @@ const TodoForm = ({ onSuccess, onClose, initialData }: TodoFormProps) => {
 		setValue, // update CategoryId'
 		reset, // load new defaults when editing
 	} = useForm<TodoFormData>({
-		resolver: zodResolver(todoFormSchema),
+		resolver: zodResolver(todoFormSchema) as Resolver<TodoFormData>,
 		defaultValues: {
 			// pre fill form with initial data if available
 			name: initialData?.name || '',
@@ -84,7 +84,7 @@ const TodoForm = ({ onSuccess, onClose, initialData }: TodoFormProps) => {
 	}, [initialData, reset])
 
 	/* ------------------------- SUBMIT HANDLER FUNCTION ------------------------ */
-	const onSubmit = async (data: TodoFormData): Promise<void> => {
+	const onSubmit = async (data: TodoFormData) => {
 		try {
 			console.log('validated form data', data)
 
