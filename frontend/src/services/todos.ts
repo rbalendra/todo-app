@@ -42,7 +42,7 @@ export interface UpdateTodoDTO {
 }
 
 // const API_BASE_URL = 'http://localhost:8080'
-const API_BASE_URL = 'https://deployedweb.site'
+const API_BASE_URL = 'https://deployedweb.site/'
 //get all active todos with optional filtering and sorting
 export const getAllTodos = async (params?: {
 	categoryId?: number // Filter by specific category
