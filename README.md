@@ -221,13 +221,3 @@ Integration tests use REST Assured for API endpoint testing:
 - **Response Validation**: JSON schema validation against predefined schemas
 - **Database State**: Clean state for each test with H2's create-drop strategy
 
-### JSON Schema Validation
-Custom JSON schemas validate API responses:
-- [`todo-schema.json`](src/test/resources/schemas/todo-schema.json) - Validates single todo responses
-- [`todo-list-schema.json`](src/test/resources/schemas/todo-list-schema.json) - Validates todo list responses
-
-### Test Data Management
-- **Isolation**: Each test runs with a fresh H2 database instance
-- **Cleanup**: Automatic cleanup with `create-drop` DDL strategy
-- **Seeding**: Test data created programmatically in test methods
-   
